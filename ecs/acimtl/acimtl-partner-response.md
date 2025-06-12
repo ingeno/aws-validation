@@ -157,11 +157,11 @@ Our deployment pipeline ensures complete traceability from source code to runnin
 #### **Version Tracking in Container Images**
 ```bash
 # API Task Definition - Image with Git commit SHA
-aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --region ca-central-1 --query 'taskDefinition.containerDefinitions[0].image'
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.containerDefinitions[0].image'
 # Output: "471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
 
 # Web Client Task Definition - Image with Git commit SHA  
-aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --region ca-central-1 --query 'taskDefinition.containerDefinitions[0].image'
+aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --query 'taskDefinition.containerDefinitions[0].image'
 # Output: "471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-web-client-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
 
 # Git Commit SHA: 4f3ebae951a368bda79d84632a831a4f266b1bed
@@ -170,7 +170,7 @@ aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --r
 #### **Current Task Definition Tags**
 ```bash
 # Check current task definition tags
-aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --region ca-central-1 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -179,7 +179,7 @@ aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --region c
   {"key": "Version", "value": "4f3ebae951a368bda79d84632a831a4f266b1bed"}
 ]
 
-aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --region ca-central-1 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --include TAGS --query 'tags'
 # Output:
 [
   {"key": "Environment", "value": "production"},
@@ -192,17 +192,17 @@ aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --r
 #### **Current Service Tag Propagation Settings**
 ```bash
 # Check tag propagation configuration
-aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --region ca-central-1 --query 'services[0].propagateTags'
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].propagateTags'
 # Output: "TASK_DEFINITION"
 
-aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --region ca-central-1 --query 'services[0].propagateTags'
+aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --query 'services[0].propagateTags'
 # Output: "TASK_DEFINITION"
 
 # Check ECS managed tags status
-aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --region ca-central-1 --query 'services[0].enableECSManagedTags'
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].enableECSManagedTags'
 # Output: true
 
-aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --region ca-central-1 --query 'services[0].enableECSManagedTags'
+aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --query 'services[0].enableECSManagedTags'
 # Output: true
 ```
 
@@ -265,17 +265,13 @@ Each task definition family in the ACI-MTL platform has dedicated IAM roles foll
 # API Task Role
 aws ecs describe-task-definition \
   --task-definition acimtl-prod-api:17 \
-  --region ca-central-1 \
-  --query 'taskDefinition.taskRoleArn' \
-  --profile acimtl.prod
+  --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::484907525335:role/acimtl-prod-api-AutoScaledFargateServiceTaskDefTask-W0Y5J4Wd4W4H"
 
 # Web Client Task Role  
 aws ecs describe-task-definition \
   --task-definition acimtl-prod-web-client:17 \
-  --region ca-central-1 \
-  --query 'taskDefinition.taskRoleArn' \
-  --profile acimtl.prod
+  --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::484907525335:role/acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm"
 ```
 
@@ -337,15 +333,11 @@ The API service role demonstrates precise resource scoping:
 ```bash
 # Check Web Client role policies
 aws iam list-attached-role-policies \
-  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm \
-  --region ca-central-1 \
-  --profile acimtl.prod
+  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
 # Output: AttachedPolicies: []
 
 aws iam list-role-policies \
-  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm \
-  --region ca-central-1 \
-  --profile acimtl.prod  
+  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
 # Output: PolicyNames: []
 ```
 
@@ -397,9 +389,7 @@ The ACI-MTL platform implements precise task sizing based on application require
 # Get API task definition resource allocation
 aws ecs describe-task-definition \
   --task-definition acimtl-prod-api:17 \
-  --region ca-central-1 \
-  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}' \
-  --profile acimtl.prod
+  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 
 # Output:
 {
@@ -414,9 +404,7 @@ aws ecs describe-task-definition \
 # Get Web Client task definition resource allocation
 aws ecs describe-task-definition \
   --task-definition acimtl-prod-web-client:17 \
-  --region ca-central-1 \
-  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}' \
-  --profile acimtl.prod
+  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 
 # Output:
 {
@@ -519,9 +507,7 @@ The ACI-MTL platform leverages **AWS Fargate Capacity Provider** exclusively for
 aws ecs describe-services \
   --cluster acimtl-prod-api \
   --services acimtl-prod-api \
-  --region ca-central-1 \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}' \
-  --profile acimtl.prod
+  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}'
 
 # Output:
 capacityProviderStrategy: null
@@ -535,9 +521,7 @@ platformVersion: LATEST
 aws ecs describe-services \
   --cluster acimtl-prod-web-client \
   --services acimtl-prod-web-client \
-  --region ca-central-1 \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}' \
-  --profile acimtl.prod
+  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}'
 
 # Output:
 capacityProviderStrategy: null
@@ -552,9 +536,7 @@ platformVersion: LATEST
 # Check cluster-level capacity provider configuration
 aws ecs describe-clusters \
   --clusters acimtl-prod-api \
-  --region ca-central-1 \
-  --query 'clusters[0].{defaultCapacityProviderStrategy:defaultCapacityProviderStrategy,capacityProviders:capacityProviders}' \
-  --profile acimtl.prod
+  --query 'clusters[0].{defaultCapacityProviderStrategy:defaultCapacityProviderStrategy,capacityProviders:capacityProviders}'
 
 # Output:
 capacityProviders: []
@@ -570,9 +552,7 @@ defaultCapacityProviderStrategy: []
 # Verify auto-scaling setup for capacity management
 aws application-autoscaling describe-scalable-targets \
   --service-namespace ecs \
-  --resource-ids service/acimtl-prod-api/acimtl-prod-api \
-  --region ca-central-1 \
-  --profile acimtl.prod
+  --resource-ids service/acimtl-prod-api/acimtl-prod-api
 
 # Output shows:
 # MinCapacity: 1 task minimum
@@ -598,9 +578,7 @@ The ACI-MTL platform exclusively uses **standard AWS Fargate** launch type for a
 aws ecs describe-services \
   --cluster acimtl-prod-api \
   --services acimtl-prod-api \
-  --region ca-central-1 \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy}' \
-  --profile acimtl.prod
+  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy}'
 
 # Output confirms standard Fargate:
 capacityProviderStrategy: null
@@ -609,7 +587,7 @@ launchType: FARGATE
 
 ```bash
 # Verify no spot fleet requests in use
-aws ec2 describe-spot-fleet-requests --region ca-central-1 --profile acimtl.prod
+aws ec2 describe-spot-fleet-requests
 
 # Output confirms no spot fleets:
 SpotFleetRequestConfigs: []
@@ -687,14 +665,13 @@ The ACI-MTL platform uses **Amazon ECR** as the image repository with **scan-on-
 ```bash
 # API Service ECR Repository
 aws ecr describe-repositories \
-  --repository-names acimtl-api-ecr \
-  --region ca-central-1 \
-  --profile acimtl.shared
+  --repository-names acimtl-api-ecr
 
-# Output shows scan-on-push enabled:
-# repositoryName: acimtl-api-ecr
-# imageScanningConfiguration: scanOnPush: true
-# repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr
+# Output:
+...
+repositoryName: acimtl-api-ecr
+imageScanningConfiguration: scanOnPush: true
+repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr
 ```
 
 #### **ECR Repository Policies and Image Version Consistency**
@@ -719,69 +696,141 @@ aws ecr describe-repositories \
 
 ### Response
 
-The ACI-MTL platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads. Fargate provides comprehensive syscall filtering and container isolation that prevents malicious syscalls from reaching the underlying host operating system.
+The ACI-MTL platform uses **AWS Fargate's built-in runtime security** to protect running containers from malicious syscalls to the underlying host operating system.
 
 ### Evidence
 
-#### **Runtime Security Tool and Configuration**
+#### **Tool and Configuration Protecting from Malicious Syscalls**
 
 **AWS Fargate Runtime Security:**
 - **Tool**: AWS Fargate's built-in container runtime security
-- **Syscall Filtering**: Fargate automatically restricts syscalls available to containers
+- **Syscall Protection**: Fargate automatically restricts syscalls available to containers
 - **Host Isolation**: Complete isolation between containers and underlying host OS
-- **Microvm Technology**: Fargate uses lightweight virtualization for additional security boundaries
 
-#### **Active Protection Evidence**
+#### **Evidence of Active Protection**
 
-**Fargate Security Boundaries:**
 ```bash
 # Verify Fargate launch type provides runtime security
 aws ecs describe-services \
   --cluster acimtl-prod-api \
   --services acimtl-prod-api \
-  --region ca-central-1 \
-  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}' \
-  --profile acimtl.prod
+  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
 
-# Output confirms Fargate runtime security:
+# Output:
 launchType: FARGATE
 platformVersion: LATEST
 ```
 
-**Container Security Features:**
-- **Syscall Restrictions**: Fargate limits container syscalls to a secure subset
-- **No Host Access**: Containers cannot access underlying EC2 instances or host OS
-- **Process Isolation**: Each container runs in isolated compute environment
-- **Network Isolation**: Container networking isolated from host networking
+#### **Specific Tool Description**
 
-#### **Linux Container Security Configuration**
-
-**Fargate Security Model:**
-- **Operating System**: Amazon Linux 2 optimized for containers
-- **Container Runtime**: AWS-managed containerd with security enhancements
-- **Syscall Filtering**: Built-in seccomp profiles restrict dangerous syscalls
-- **Capability Dropping**: Non-essential Linux capabilities automatically dropped
-
-**Security Modules Active:**
-- **SELinux**: Security-Enhanced Linux enabled by default
-- **Seccomp**: Secure computing mode filters syscalls
-- **AppArmor**: Application security profiles (where applicable)
-- **Cgroups**: Resource isolation and security boundaries
+**AWS Fargate Security:**
+- **Built-in Security**: AWS-managed runtime security (not third-party tooling)
+- **Syscall Filtering**: Seccomp profiles restrict dangerous syscalls
+- **Container Isolation**: Each container runs in isolated compute environment
 
 This Fargate-based runtime security ensures comprehensive protection against malicious syscalls while maintaining application functionality and performance.
 
-## Summary
+## ECS-012: Operating Systems Optimized for Containerized Workloads
 
-The ACI-MTL platform demonstrates comprehensive ECS expertise through:
+### Response
 
-1. **Complete containerization** of the application stack on ECS Fargate
-2. **Automated CI/CD pipeline** with infrastructure as code using AWS CDK
-3. **Single-purpose task definitions** following best practices
-4. **Proper resource management** with explicit CPU and memory allocation
-5. **Secure IAM roles** following least privilege principles
-6. **Scalable architecture** leveraging Fargate's automatic scaling capabilities
-7. **Multi-environment deployment** with centralized management
-8. **Comprehensive monitoring** and logging through CloudWatch
-9. **Appropriate storage solutions** for different data types and access patterns
+The ACI-MTL platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems** without requiring customer management of underlying AMIs or infrastructure.
 
-The platform successfully demonstrates production-grade ECS deployment with automated operations, security best practices, and scalable architecture.
+### Evidence
+
+#### **Operating System Implementation**
+
+**AWS Fargate Managed OS:**
+- **Operating System**: Amazon Linux 2 (AWS-managed and ECS-optimized)
+- **Management**: Fully managed by AWS Fargate service
+- **Optimization**: Pre-optimized for containerized workloads with security enhancements
+- **Updates**: Automatic OS updates and patches managed by AWS
+
+```bash
+# Verify Fargate launch type (no customer-managed AMIs)
+aws ecs describe-services \
+  --cluster acimtl-prod-api \
+  --services acimtl-prod-api \
+  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
+
+# Output:
+launchType: FARGATE
+platformVersion: LATEST
+```
+
+#### **ECS-Optimized AMI Justification**
+
+**Fargate Managed Infrastructure:**
+- **No AMI Management**: Fargate eliminates need for customer-managed ECS-optimized AMIs
+- **AWS-Optimized**: Underlying infrastructure automatically uses AWS-optimized operating systems
+- **Container Focus**: OS optimized specifically for containerized workloads with minimal attack surface
+- **Compliance**: AWS-managed OS meets security and compliance requirements
+
+```bash
+# Verify no ECS-optimized AMIs in use
+aws ec2 describe-images --owners self --filters "Name=name,Values=amzn2-ami-ecs-*"
+
+# Output
+Images: []
+```
+
+## ECS-013: Compliance Standards and Frameworks
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform does not require adherence to specific regulatory compliance standards (SOC, PCI, FedRAMP, HIPAA, etc.).
+
+## ECS-014: ECS-Anywhere for On-Premises and Edge Deployments
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+
+## ECS-015: Ingress Control and Network Traffic Configuration
+
+### Response
+
+The ACI-MTL platform uses **Application Load Balancer (ALB)** for ingress control with TLS-secured layer 7 traffic.
+
+### Evidence
+
+#### **Ingress Controller and Infrastructure**
+
+**Ingress Controller**: AWS Application Load Balancer (ALB) with HTTPS/TLS termination
+
+```bash
+# Verify VPC configuration for ECS services
+aws ecs describe-services \
+  --cluster acimtl-prod-api \
+  --services acimtl-prod-api \
+  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+
+# Output shows private subnet deployment:
+securityGroups:
+- sg-07e5a5aa26e76e167
+subnets:
+- subnet-0372dfef1f99d4299
+- subnet-0c8258e3ec5bf068f
+```
+
+**Infrastructure**: Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
+
+#### **Network Modes and Load Balancing Configuration**
+
+```bash
+# Verify awsvpc network mode for Fargate
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
+
+# Output confirms Fargate networking:
+networkMode: awsvpc
+requiresCompatibilities:
+- FARGATE
+```
+
+**Configuration**: awsvpc network mode with IP-based ALB target groups for direct task communication
+
+## ECS-016: IP Exhaustion Management
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and IP exhaustion concerns do not apply to Fargate use cases per validation requirements.
