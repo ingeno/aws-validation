@@ -242,3 +242,28 @@ The ACI-MTL platform uses **Amazon CloudWatch** for comprehensive observability 
 - **Scaling Events**: Auto-scaling metrics and logs captured during scaling operations  
 - **Multi-Environment**: CloudWatch monitoring across dev, staging, and prod accounts
 - **Distributed Tracing**: Not implemented - given the simple nature of the system, X-Ray distributed tracing is overkill and not used in this scenario. CloudWatch logs provide sufficient debugging capabilities.
+
+## ECS-019: Storage Options Selection
+
+### Response
+
+The ACI-MTL platform uses **external database services** and **object storage** to meet application storage requirements without persistent container storage.
+
+### Evidence
+
+#### **Workload and Storage Selection**
+
+**Shelter Management Application Workload:**
+- **Database Operations**: Client records, case management, reporting queries
+- **File Management**: Document uploads, reports, administrative files
+- **Web Application**: Stateless application serving and API processing
+
+**Storage Solutions:**
+- **Amazon RDS**: PostgreSQL database for transactional data with automated backups
+- **Amazon S3**: Object storage for file uploads and document management
+- **No Container Storage**: Fargate containers remain stateless without persistent volumes
+
+**Performance Requirements and Reasoning:**
+- **RDS**: Sub-second query response for database operations, automated scaling and backup
+- **S3**: Standard access latency acceptable for file storage, cost-effective for document retention
+- **Stateless Design**: No container-level storage needed, simplifies deployment and scaling
