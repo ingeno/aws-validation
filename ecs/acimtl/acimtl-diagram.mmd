@@ -1,0 +1,69 @@
+graph TB
+    Internet["🌐 Internet<br/>(Public)"]
+    
+    subgraph AWSInfra ["AWS Cloud Infrastructure"]
+        subgraph Region ["🇨🇦 AWS region (Canada Central - ca-central-1)"]
+            subgraph VPC ["🔒 VPC"]
+                subgraph PublicZone ["🔓 Public Zone"]
+                    BastionHost["🖥️ Bastion Host"]
+                    ELB["⚖️ Elastic Load<br/>Balancing"]
+                end
+                
+                subgraph PrivateSubnet ["🔐 Private Subnet"]
+                    subgraph Backend ["Backend"]
+                        Database["🗄️ Database"]
+                        APIFargate["🐳 AWS Fargate<br/>Api"]
+                    end
+                    
+                    subgraph Frontend ["Frontend"]
+                        WebFargate["🐳 AWS Fargate<br/>Serveur web"]
+                    end
+                end
+            end
+        end
+    end
+    
+    %% External AWS Services (outside VPC)
+    AdminUser["👨‍💼 Admin"]
+    S3["🪣 Amazon S3"]
+    Cognito["👤 Amazon Cognito"]
+    IAM["🔑 AWS IAM"]
+    CloudWatch["📊 Amazon CloudWatch"]
+
+    %% Access patterns
+    Internet -->|Developer access| BastionHost
+    Internet -->|User access| ELB
+    
+    %% Internal connections
+    BastionHost --> APIFargate
+    ELB --> WebFargate
+    ELB --> APIFargate
+    
+    %% Backend connections
+    APIFargate --- Database
+    
+    %% External service connections
+    AdminUser --> S3
+    APIFargate --> S3
+    APIFargate <--> Cognito
+    Cognito <--> IAM
+    APIFargate -.-> CloudWatch
+    WebFargate -.-> CloudWatch
+    Database -.-> CloudWatch
+
+    %% Styling
+    classDef awsStyle fill:#232F3E,stroke:#FF9900,stroke-width:3px,color:white
+    classDef regionStyle fill:#FFF3E0,stroke:#FF9800,stroke-width:2px
+    classDef vpcStyle fill:#E8F4FD,stroke:#1976D2,stroke-width:2px
+    classDef publicStyle fill:#E8F5E8,stroke:#4CAF50,stroke-width:2px
+    classDef privateStyle fill:#E3F2FD,stroke:#2196F3,stroke-width:2px
+    classDef serviceStyle fill:#F3E5F5,stroke:#9C27B0,stroke-width:2px
+    classDef externalStyle fill:#FFEBEE,stroke:#F44336,stroke-width:2px
+    
+    class AWSInfra awsStyle
+    class Region regionStyle
+    class VPC vpcStyle
+    class PublicZone publicStyle
+    class PrivateSubnet,Backend,Frontend privateStyle
+    class S3,Cognito,IAM,CloudWatch serviceStyle
+    class Internet,AdminUser externalStyle

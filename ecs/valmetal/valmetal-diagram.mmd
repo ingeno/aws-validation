@@ -1,0 +1,128 @@
+graph LR
+    subgraph Farm ["🚜 Farm"]
+        subgraph Equipment ["Equipment"]
+            HMI["📱 HMI"]
+            FarmingEquip["🚜 Farming<br/>Equipment"]
+        end
+        
+        subgraph PLC ["📟 PLC"]
+            subgraph RealTime ["Real-Time Control"]
+                AutoProgram["⚙️ Automation Program<br/>(Valmetal)"]
+            end
+            
+            subgraph DataInterfaces ["Data Hub & Interfaces"]
+                DataHub["🗄️ Global Data<br/>Space"]
+                RestAPI["🌐 REST API"]
+            end
+            
+            subgraph EdgeGateway ["Edge Compute & Gateway"]
+                Agent["🤖 Agent<br/>(Ingeno)"]
+                NodeRED["🔴 Node-RED<br/>(Ingeno)"]
+                OPCServer["🔌 OPC-UA Server"]
+                BalenaEngine["🐳 Balena Engine"]
+            end
+        end
+    end
+
+    subgraph Cloud ["☁️ Cloud"]
+        subgraph SecurityGov ["🔐 Security, Monitoring & Governance"]
+            IoTDevMgmt["🛡️ IoT Device<br/>Management"]
+            IoTPolicies["📋 IoT Core<br/>Policies"]
+            CloudWatch["📊 CloudWatch"]
+            IAM["🔑 IAM"]
+            AppConfig["⚙️ App Config"]
+            Cognito["👤 Cognito"]
+        end
+        
+        subgraph DataFlow ["Data Processing Pipeline"]
+            subgraph Ingestion ["📥 Ingestion"]
+                IoTCore["📡 IoT Core<br/>Topics"]
+                IoTShadow["👥 IoT Core<br/>Device Shadow"]
+                IoTRules["📝 IoT Core<br/>Rules"]
+            end
+            
+            subgraph Processing ["⚙️ Processing"]
+                EventBridge["🌉 EventBridge"]
+                SQS["📬 SQS"]
+                StepFunctions["🔄 Step Functions"]
+                ECSFargate["🐳 ECS Fargate"]
+                Lambda["⚡ Lambda"]
+                KinesisFirehose["🚰 Kinesis<br/>Firehose"]
+            end
+            
+            subgraph Storage ["💾 Storage"]
+                S3["🪣 S3"]
+                Timestream["⏱️ Timestream"]
+                DynamoDB["🗃️ DynamoDB"]
+                RDS["🗄️ RDS"]
+            end
+        end
+        
+        subgraph UserApps ["📱 Applications"]
+            AdminWeb["👨‍💼 Admin Web App"]
+            ClientWeb["👤 Client Web App"]
+            ClientPWA["📱 Client PWA"]
+        end
+        
+        subgraph Notifications ["📬 Notifications"]
+            SNS["📢 SNS"]
+            SES["📧 SES"]
+        end
+    end
+
+    %% Farm connections
+    HMI -.->|Ethernet| PLC
+    FarmingEquip -.->|I/O Module| PLC
+
+    %% Farm to Cloud
+    PLC ==>|Internet<br/>MQTT/HTTP| IoTCore
+
+    %% Ingestion flow
+    IoTCore --> IoTShadow
+    IoTCore --> IoTRules
+    
+    %% Processing flow
+    IoTRules --> EventBridge
+    IoTRules --> KinesisFirehose
+    EventBridge --> SQS
+    EventBridge --> StepFunctions
+    EventBridge --> Lambda
+    
+    %% Storage flow
+    SQS --> ECSFargate
+    StepFunctions --> ECSFargate
+    Lambda --> DynamoDB
+    Lambda --> Timestream
+    KinesisFirehose --> S3
+    
+    %% ECS connections
+    ECSFargate --> DynamoDB
+    ECSFargate --> RDS
+    ECSFargate --> Timestream
+    ECSFargate --> S3
+    
+    %% Applications
+    ECSFargate --> AdminWeb
+    ECSFargate --> ClientWeb
+    ECSFargate --> ClientPWA
+    
+    %% Notifications
+    ECSFargate --> SNS
+    ECSFargate --> SES
+
+    %% Styling
+    classDef farmStyle fill:#E8F5E8,stroke:#2E7D32,stroke-width:2px
+    classDef securityStyle fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef ingestionStyle fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef processingStyle fill:#FCE4EC,stroke:#C2185B,stroke-width:2px
+    classDef storageStyle fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    classDef appStyle fill:#E8F5E8,stroke:#388E3C,stroke-width:2px
+    classDef notifStyle fill:#FFF8E1,stroke:#FBC02D,stroke-width:2px
+    
+    class Farm,Equipment,PLC,RealTime,DataInterfaces,EdgeGateway farmStyle
+    class SecurityGov securityStyle
+    class Ingestion ingestionStyle
+    class Processing processingStyle
+    class Storage storageStyle
+    class UserApps appStyle
+    class Notifications notifStyle

@@ -1,0 +1,731 @@
+"Amazon ECS Customer Reference Requirements 
+The following requirements relate to how Amazon ECS was used in each provided customer reference.",,,,,
+ID,Requirement Description,ACI-MTL,,Valmetal,
+,,Met?,Partner Response,Met?,Partner Response
+Amazon ECS Expertise,,,,,
+The following requirements relate to the AWS Partner's ability to demonstrate deep expertise with Amazon ECS in the context of the provided customer references.,,,,,
+,,,,,
+ECS-001,"Amazon ECS represents majority of the workload 
+Amazon ECS is used to manage majority of all workloads and core data flows for the system. Amazon Elastic Compute Cloud instances (EC2 or Fargate) should be used to manage the underlying infrastructure of the Amazon ECS cluster. 
+
+Please provide the following as evidence:
+
+  * List of workloads/components that are being deployed to Amazon ECS
+  * The output of running the following command:  aws ecs list-tasks
+",,"The complete ACI-MTL application is containerized and deployed on Amazon ECS
+
+There are 2 components on ECS:
+1. Frontend (web app)
+SSR frontend running on containers
+
+2. Backend API
+- core business logic
+- API for web application frontend
+- integration with other systems
+The backend service runs on Amazon ECS and handles all core 
+business logic
+The service processes requests, to serve the UI
+The service interacts with other AWS services including RDS database and S3 for document storage
+
+# List clusters
+> aws ecs list-clusters
+
+clusterArns:
+- arn:aws:ecs:ca-central-1:484907525335:cluster/acimtl-prod-web-client
+- arn:aws:ecs:ca-central-1:484907525335:cluster/acimtl-prod-api
+
+# List tasks for web client
+> aws ecs list-tasks --cluster acimtl-prod-web-client
+
+taskArns:
+- arn:aws:ecs:ca-central-1:484907525335:task/acimtl-prod-web-client/acec54f623894240804eae1ec13867b9
+
+# List tasks for backend api
+> aws ecs list-tasks --cluster acimtl-prod-api       
+
+taskArns:
+- arn:aws:ecs:ca-central-1:484907525335:task/acimtl-prod-api/09d11cc6e2454d5e8b16ee472ea5eaaf",,"Valmetal web application is containerized and deployed on Amazon ECS. There also some lambda functions involved in this solution but ECS is the core compute service used.
+
+There are 2 components on ECS:
+1. Frontend (web app)
+SSR frontend running on containers
+
+2. Backend API
+- core business logic
+- API for web application frontend
+- integration with other systems
+The backend service runs on Amazon ECS and handles all core 
+business logic
+The service processes requests, to serve the UI
+The service interacts with other AWS services including RDS database and S3 for document storage
+
+# List clusters
+> aws ecs list-clusters
+
+clusterArns:
+- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-web-client
+- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-backend-api
+
+# List tasks for web client
+> aws ecs list-tasks --cluster valmetal-prod-web-client
+
+taskArns:
+- arn:aws:ecs:us-east-1:628892762446:task/valmetal-prod-web-client/4822ca6be77f49429c091d1430a89f41
+
+# List tasks for backend api
+> aws ecs list-tasks --cluster valmetal-prod-backend-api
+
+taskArns:
+- arn:aws:ecs:us-east-1:628892762446:task/valmetal-prod-backend-api/9c9fbdab99cd4d6fa5327283f51ab38f"
+ECS-002,"Changes to infrastructure and workloads are deployed and updated in an automated and reliable way 
+Changes to the infrastructure and workloads are automated using infrastructure as code tooling such as AWS CloudFormation, AWS CDK, or other third-party infrastructure as code tooling. These technical artifacts (both infrastructure and workload) must be version controlled and stored in a source repository such as GitHub. The tool being used must have rollback procedures in place in case of failure. *Changes to production clusters/environment cannot be managed/conducted through the AWS management console.
+
+Please provide the following as evidence:
+
+  * Infrastructure as code tooling used to manage infrastructure
+  * Description of the tools used for automated deployment
+  * Description of deployment process and rollback procedures
+  * Description of source repository that stores infrastructure and task definition files in source control
+  * Version control system used to manage technical artifacts
+  * Description of CI/CD tooling to automate updates to underlying workloads
+",,"Infrastructure as code tooling: AWS CDK (TypeScript)
+Description of the tools used for automated deployment:
+
+AWS CDK for infrastructure provisioning and ECS service management
+GitHub Actions for CI/CD pipeline orchestration
+Docker for containerized application builds
+Amazon ECR for container image storage and versioning
+
+Description of deployment process and rollback procedures:
+
+Developer commits code changes to feature branch in GitHub (Pull Request)
+  - Pull request triggers code review and automated testing pipeline
+
+Upon merge to main branch, GitHub Actions workflow initiates:
+  - Automated linting, unit tests, component tests, and end-to-end tests
+  - Container images built and tagged with Git commit SHA
+  - Images pushed to Amazon ECR
+  - CDK deploys infrastructure changes to staging environment (replica of production)
+  - Automated health checks validate staging deployment functionality
+  - If staging validation passes, production deployment begins with ECS service updates
+  - Post-deployment health monitoring with CloudWatch alarms
+  - Automatic rollback triggered if health checks fail or monitoring indicates issues
+
+Rollback procedures:
+
+- Automated health checks post-deployment assess service health metrics
+- Automatic rollback triggered if health checks fail within monitoring window
+- CloudWatch alarms monitored during deployment to detect anomalies
+- Previous task definition versions remain available for rollback
+- Manual rollback procedures available for emergency situations
+
+Description of source repository that stores infrastructure and task definition files:
+- GitHub repository with branch protection policies requiring code reviews. All infrastructure code, ECS task definitions, and application configuration stored under version control.
+
+Version control system used to manage technical artifacts:
+- Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
+
+Description of CI/CD tooling to automate updates to underlying workloads:
+- GitHub Actions workflows orchestrate the deployment pipeline, integrating with AWS services to automate ECS task definition updates and service deployments. Zero manual changes permitted in production environment - all modifications flow through the version-controlled Infrastructure deployment pipeline.",,"Infrastructure as code tooling: AWS CDK (TypeScript)
+Description of the tools used for automated deployment:
+
+AWS CDK for infrastructure provisioning and ECS service management
+GitHub Actions for CI/CD pipeline orchestration
+Docker for containerized application builds
+Amazon ECR for container image storage and versioning
+
+Description of deployment process and rollback procedures:
+
+Developer commits code changes to feature branch in GitHub (Pull Request)
+  - Pull request triggers code review and automated testing pipeline
+
+Upon merge to main branch, GitHub Actions workflow initiates:
+  - Automated linting, unit tests, component tests, and end-to-end tests
+  - Container images built and tagged with Git commit SHA
+  - Images pushed to Amazon ECR
+  - CDK deploys infrastructure changes to staging environment (replica of production)
+  - Automated health checks validate staging deployment functionality
+  - If staging validation passes, production deployment begins with ECS service updates
+  - Post-deployment health monitoring with CloudWatch alarms
+  - Automatic rollback triggered if health checks fail or monitoring indicates issues
+
+Rollback procedures:
+
+- Automated health checks post-deployment assess service health metrics
+- Automatic rollback triggered if health checks fail within monitoring window
+- CloudWatch alarms monitored during deployment to detect anomalies
+- Previous task definition versions remain available for rollback
+- Manual rollback procedures available for emergency situations
+
+Description of source repository that stores infrastructure and task definition files:
+- GitHub repository with branch protection policies requiring code reviews. All infrastructure code, ECS task definitions, and application configuration stored under version control.
+
+Version control system used to manage technical artifacts:
+- Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
+
+Description of CI/CD tooling to automate updates to underlying workloads:
+- GitHub Actions workflows orchestrate the deployment pipeline, integrating with AWS services to automate ECS task definition updates and service deployments. Zero manual changes permitted in production environment - all modifications flow through the version-controlled Infrastructure deployment pipeline."
+ECS-003,"Amazon ECS task definition families are used for a singular business purpose 
+In the context of Amazon Elastic Container Service (ECS), a singular business purpose task is a task that runs a single application process in a container image. This approach is considered best practice when deploying containers on ECS because it ensures that each container image is focused on a single, well-defined function. Having a single purpose for each container makes it easier to manage and maintain the containers, as well as to scale and update individual components. It also improves security by reducing the attack surface and making it easier to apply security patches to specific components.
+
+Please provide the following as evidence:
+
+  * Provide a list of created task definitions and description of their business functions.
+",,"There are 2 task definitions ECS on each environment:
+
+> aws ecs list-task-definitions
+
+taskDefinitionArns:
+- arn:aws:ecs:ca-central-1:484907525335:task-definition/acimtl-prod-web-client:17
+- arn:aws:ecs:ca-central-1:484907525335:task-definition/acimtl-prod-api:17
+
+1. acimtl-prod-web-client : Frontend (web app)
+Server-side rendering frontend implemented with NodeJS/NextJS running on containers
+
+2. acimtl-prod-api : Backend API
+- core business logic
+- API for web application frontend
+- integration with other systems
+The backend service runs on Amazon ECS and handles all core 
+business logic
+The service processes requests, to serve the UI
+The service interacts with other AWS services including RDS database and S3 for document storage",,"There are 2 task definitions ECS on each environment:
+
+> aws ecs list-task-definitions
+
+taskDefinitionArns:
+- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-backend-api:37
+- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-web-client:20
+
+1. valmetal-prod-web-client : Frontend (web app)
+Server-side rendering frontend implemented with NodeJS/NextJS running on containers
+
+2. valmetal-prod-backend-api : Backend API
+- core business logic
+- API for web application frontend
+- integration with other systems
+The backend service runs on Amazon ECS and handles all core 
+business logic
+The service processes requests, to serve the UI
+The service interacts with other AWS services including RDS database and S3 for document storage"
+ECS-004,"Tagging strategy and Amazon ECS Managed Tags and Tag Propagation is implemented 
+To ensure that application versions are tagged appropriately and Amazon ECS Managed Tags and Tag Propagation are enabled, the following practices should be followed:
+
+  * There should be a one-to-one mapping between a version of application code, a container image tag, and a task definition revision. As part of the release process, a git commit should be turned into a container image that has its own associated git commit SHA. That container image tag should then get its own Amazon ECS task definition update.
+  * Amazon ECS Managed Tags and Tag Propagation should be enabled to attach and propagate tags on the tasks that the service launches. This is useful for usage and billing reports and can provide insight into resource usage.
+  * The tag dimensions should accurately represent how tasks are launched within an Amazon ECS cluster. Example dimensions can include environment=production or application=storefront.
+
+Please provide the following as evidence:
+
+  * Description of tagging strategy used by the partner to ensure application versions are tagged appropriately based on running task definitions
+  * Description of tag dimensions that accurately represent how tasks are launched within an Amazon ECS cluster
+  * Example of tag dimensions being used within and/or across Amazon ECS clusters that demonstrate that tasks are being mapped to singular business processes.
+",,"Description of tagging strategy used to ensure application versions are tagged appropriately:
+We implement strict one-to-one mapping between application code version, container image tag, and task definition revision:
+
+Each Git commit that changes application code triggers a new container build
+Container images are tagged with the Git commit SHA (e.g., valmetal-api:7bd4e21)
+Task definition revisions directly reference these specific image tags with full registry path
+CI/CD pipeline ensures each task definition revision in production has traceable lineage to specific code version
+Amazon ECS Managed Tags enabled with tag propagation to automatically attach tags to tasks and supporting resources
+
+Description of tag dimensions that accurately represent how tasks are launched within Amazon ECS cluster:
+Standardized tag dimensions applied consistently across all ECS resources:
+
+Environment: production, staging, development
+Version: Git commit SHA for complete traceability
+
+Example of tag dimensions being used within and/or across Amazon ECS clusters:
+Production ECS task example tags:
+Environment=production
+Version=7bd4e21
+These tags enable:
+
+Environment-based resource organization and operational filtering
+Complete version traceability from deployed tasks back to source code
+Automated deployment validation and rollback capabilities
+Resource lifecycle management across development, staging, and production environments
+
+Tag propagation ensures consistent tagging from ECS tasks to associated resources including CloudWatch log groups, load balancers, and auto-scaling groups, providing end-to-end visibility across the application infrastructure.",,"Description of tagging strategy used to ensure application versions are tagged appropriately:
+We implement strict one-to-one mapping between application code version, container image tag, and task definition revision:
+
+Each Git commit that changes application code triggers a new container build
+Container images are tagged with the Git commit SHA (e.g., valmetal-api:7bd4e21)
+Task definition revisions directly reference these specific image tags with full registry path
+CI/CD pipeline ensures each task definition revision in production has traceable lineage to specific code version
+Amazon ECS Managed Tags enabled with tag propagation to automatically attach tags to tasks and supporting resources
+
+Description of tag dimensions that accurately represent how tasks are launched within Amazon ECS cluster:
+Standardized tag dimensions applied consistently across all ECS resources:
+
+Environment: production, staging, development
+Version: Git commit SHA for complete traceability
+
+Example of tag dimensions being used within and/or across Amazon ECS clusters:
+Production ECS task example tags:
+Environment=production
+Version=7bd4e21
+These tags enable:
+
+Environment-based resource organization and operational filtering
+Complete version traceability from deployed tasks back to source code
+Automated deployment validation and rollback capabilities
+Resource lifecycle management across development, staging, and production environments
+
+Tag propagation ensures consistent tagging from ECS tasks to associated resources including CloudWatch log groups, load balancers, and auto-scaling groups, providing end-to-end visibility across the application infrastructure."
+ECS-005,"Task definition families have their own associated IAM roles 
+Task definition families should have their own associated IAM roles to limit how much access each service has to resources within a partners AWS accounts
+
+Please provide the following as evidence:
+
+  * ARN of task definition files from the case studies provided that shows that the IAM role attached are scoped down by the principles of least privilege
+",,"Each task definition family in the ACI-MTL platform has dedicated IAM roles following the principle of least privilege:
+
+Each task family has both a unique task role and task execution role
+Roles contain only explicit allow statements for required AWS services with specific resource ARNs
+No wildcards used in Resource elements except where necessary for service functionality
+Policies are scoped to specific resources and actions required for each service's business function
+
+IAM Role Strategy by Task Family:
+
+acimtl-prod-api: Backend permissions for user management, logging, and file operations with VPC restrictions
+acimtl-prod-web-client: Minimal permissions model with no additional policies attached beyond basic ECS execution role
+
+Evidence - ARN of task definition files showing scoped IAM roles:
+bash# API Task Role
+aws ecs describe-task-definition \
+  --task-definition acimtl-prod-api:17 \
+  --query 'taskDefinition.taskRoleArn'
+""arn:aws:iam::484907525335:role/acimtl-prod-api-AutoScaledFargateServiceTaskDefTask-W0Y5J4Wd4W4H""
+
+# Web Client Task Role  
+aws ecs describe-task-definition \
+  --task-definition acimtl-prod-web-client:17 \
+  --query 'taskDefinition.taskRoleArn'
+""arn:aws:iam::484907525335:role/acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm""
+API Role Permissions (BackendPolicy v2):
+The backend service requires specific permissions for application operations:
+
+Cognito Identity Provider: Admin user management operations scoped to specific user pool ca-central-1_J0PRtqr7r
+CloudWatch Logs: Log stream management for service-specific log group acimtl-prod-api
+S3: Complete file operations (Get, Put, Delete, List) on specific client files bucket with VPC condition restrictions
+
+Web Client Role Permissions:
+The web client follows a zero-trust model with no additional IAM policies attached, relying solely on the ECS task execution role for basic container operations. All API calls are made through the backend service, maintaining proper separation of concerns and minimizing attack surface.
+This demonstrates strict adherence to least privilege principles where each service has access only to the specific AWS resources and actions required for its designated business function within the platform.",,"Each task definition family in the Valmetal platform has dedicated IAM roles following the principle of least privilege:
+- Each task family has both a unique task role and task execution role
+- Roles contain only explicit allow statements for required AWS services with specific resource ARNs
+- No wildcards used in Resource elements except where necessary for service functionality
+- Policies are scoped to specific resources and actions required for each service's business function
+
+IAM Role Strategy by Task Family:
+- `valmetal-prod-backend-api`: Comprehensive backend permissions for user management, IoT operations, alarm processing, and data queries
+- `valmetal-prod-web-client`: Minimal permissions model with no additional policies attached beyond basic ECS execution role
+
+Evidence - ARN of task definition files showing scoped IAM roles:
+
+# Backend API Task Role
+aws ecs describe-task-definition \
+  --task-definition valmetal-prod-backend-api:37 \
+  --query 'taskDefinition.taskRoleArn'
+""arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceT-sIV3LgyVICHP""
+
+# Web Client Task Role  
+aws ecs describe-task-definition \
+  --task-definition valmetal-prod-web-client:20 \
+  --query 'taskDefinition.taskRoleArn'
+""arn:aws:iam::628892762446:role/valmetal-prod-web-client-AutoScaledFargateServiceTa-MkTSyCuPPpEs""
+
+Backend API Role Permissions (BackendPolicy v10):
+The backend service requires comprehensive permissions for farm operations:
+- Cognito Identity Provider: Admin user management operations scoped to specific user pool
+- CloudWatch Logs: Log stream management for service-specific log group
+- IoT Core: Thing index searches and device shadow updates for farm equipment
+- SNS: Equipment alarm subscription management for specific alarm topic
+- Step Functions: Alarm workflow execution and management for specific state machine
+- SQS: Message processing for alarm and thing event queues
+- DynamoDB: Query operations on entity hierarchy table with specific index access
+- Timestream: Data queries on feed sequence table for farm analytics
+- App Config: Configuration retrieval for dynamic application settings
+
+Web Client Role Permissions:
+The web client follows a zero-trust model with no additional IAM policies attached, relying solely on the ECS task execution role for basic container operations. All API calls are made through the backend service, maintaining proper separation of concerns and minimizing attack surface.
+
+This demonstrates strict adherence to least privilege principles where each service has access only to the specific AWS resources and actions required for its designated business function within the farm automation platform."
+ECS-006,"Partner has mechanism in place for appropriately determining Amazon ECS task sizes 
+Task definitions need to be appropriately sized based on application requirements for tasks running in an Amazon ECS cluster to be able to scale properly and for capacity planning purposes.
+
+Please provide the following as evidence:
+
+  * Description of resource reservation and limits for running tasks within partners Amazon ECS cluster
+  * Example task definition file that demonstrates proper usage of resource reservations and limits
+",,"Our ECS task definitions are sized based on application requirements, with explicit resource reservations and limits, ensuring tasks can scale properly and cluster capacity is managed effectively. Task resource allocations are determined through performance testing  monitoring usage to establish baseline requirements, with periodic review and adjustment based on CloudWatch metrics and application performance.
+
+Resource Reservation and Limits:
+   - All ECS task definitions in our production clusters (e.g., `acimtl-prod-api`, `acimtl-prod-web-client`) explicitly specify both `cpu` and `memory` at the task level.
+   - For example, the `acimtl-prod-api` task definition reserves 0.5 vCPU (`""cpu"": ""512""`) and 1 GB memory (`""memory"": ""1024""`) per task. This ensures that ECS only schedules tasks when sufficient resources are available, supporting predictable scaling and robust capacity planning.
+   - On Fargate, these limits are strictly enforced, preventing resource contention and guaranteeing that each task receives the resources it requires.
+
+Evidence – Example Task Definition:
+   - Below is a real snippet from our `acimtl-prod-api` ECS task definition, demonstrating proper resource reservation and limits:
+
+{
+  ""family"": ""acimtl-prod-api"",
+  ""networkMode"": ""awsvpc"",
+  ""requiresCompatibilities"": [""FARGATE""],
+  ""cpu"": ""512"",
+  ""memory"": ""1024"",
+  ""containerDefinitions"": [
+    {
+      ""name"": ""acimtl-prod-api"",
+      ""image"": ""471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr:prod-..."",
+      ""cpu"": 0,
+      ""essential"": true,
+      ""portMappings"": [
+        { ""containerPort"": 8080, ""hostPort"": 8080, ""protocol"": ""tcp"" }
+      ],
+      ""logConfiguration"": {
+        ""logDriver"": ""awslogs"",
+        ""options"": {
+          ""awslogs-group"": ""acimtl-prod-api"",
+          ""awslogs-region"": ""ca-central-1"",
+          ""awslogs-stream-prefix"": ""prod-...""
+        }
+      }
+    }
+  ]
+}",,"Our ECS task definitions are sized based on application requirements, with explicit resource reservations and limits, ensuring tasks can scale properly and cluster capacity is managed effectively. Task resource allocations are determined through performance testing  monitoring usage to establish baseline requirements, with periodic review and adjustment based on CloudWatch metrics and application performance.
+
+Resource Reservation and Limits:
+   - All ECS task definitions in our Valmetal production clusters (e.g., `valmetal-prod-web-client`) explicitly specify both `cpu` and `memory` at the task level.
+   - For example, the `valmetal-prod-web-client` task definition reserves 0.5 vCPU (`""cpu"": ""512""`) and 1 GB memory (`""memory"": ""1024""`) per task. This ensures that ECS only schedules tasks when sufficient resources are available, supporting predictable scaling and robust capacity planning.
+   - On Fargate, these limits are strictly enforced, preventing resource contention and guaranteeing that each task receives the resources it requires.
+
+Evidence – Example Task Definition:
+   - Below is a real snippet from our `valmetal-prod-web-client` ECS task definition, demonstrating proper resource reservation and limits:
+
+{
+  ""family"": ""valmetal-prod-web-client"",
+  ""networkMode"": ""awsvpc"",
+  ""requiresCompatibilities"": [""FARGATE""],
+  ""cpu"": ""512"",
+  ""memory"": ""1024"",
+  ""containerDefinitions"": [
+    {
+      ""name"": ""valmetal-prod-web-client"",
+      ""image"": ""497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-..."",
+      ""cpu"": 0,
+      ""essential"": true,
+      ""portMappings"": [
+        { ""containerPort"": 3000, ""hostPort"": 3000, ""protocol"": ""tcp"" }
+      ],
+      ""logConfiguration"": {
+        ""logDriver"": ""awslogs"",
+        ""options"": {
+          ""awslogs-group"": ""valmetal-prod-web-client"",
+          ""awslogs-region"": ""us-east-1"",
+          ""awslogs-stream-prefix"": ""prod-..."",
+          ""mode"": ""blocking""
+        }
+      }
+    }
+  ]
+}"
+ECS-007,"Partner has defined strategy for addressing cluster capacity for Amazon ECS clusters 
+Amazon ECS Capacity Providers allow for Amazon ECS clusters to scale your clusters up and down for you. The three different capacity providers available include the at least one of the following: 1) Amazon EC2, 2) Fargate, and 3) Fargate Spot. The recommended approach for scaling clusters is to leverage capacity providers and to not scale clusters manually.
+
+Please provide the following as evidence:
+
+  * Description of how the partner has configured Amazon ECS capacity providers to address scaling events within their Amazon ECS clusters
+",,"All ECS services in the ACI-MTL environment are deployed using AWS Fargate. Fargate automatically provisions and scales compute resources for tasks, eliminating the need for manual cluster scaling or EC2 instance management. This approach fully meets AWS recommendations for ECS cluster capacity management.
+
+- Fargate-Only: All ECS services use the Fargate launch type, so AWS manages all scaling events and cluster capacity automatically.
+- No Manual Scaling: No EC2 or Fargate Spot capacity providers are configured; there is no manual intervention required for scaling.
+
+Evidence
+
+- Cluster Capacity Providers:
+
+  aws ecs describe-clusters --clusters acimtl-prod-web-client --region ca-central-1 --include CONFIGURATIONS
+  # Output: capacityProviders: []
+  aws ecs describe-clusters --clusters acimtl-prod-api --region ca-central-1 --include CONFIGURATIONS
+  # Output: capacityProviders: []
+
+- Service Launch Type:
+
+  aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --region ca-central-1
+  # Output: launchType: FARGATE
+  aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --region ca-central-1
+  # Output: launchType: FARGATE
+
+This configuration ensures that all scaling and capacity management is handled by AWS, in line with best practices and compliance requirements.",,"All ECS services in the Valmetal environment are deployed using AWS Fargate. Fargate automatically provisions and scales compute resources for tasks, eliminating the need for manual cluster scaling or EC2 instance management. This approach fully meets AWS recommendations for ECS cluster capacity management.
+
+- Fargate-Only: All ECS services use the Fargate launch type, so AWS manages all scaling events and cluster capacity automatically.
+- No Manual Scaling: No EC2 or Fargate Spot capacity providers are configured; there is no manual intervention required for scaling.
+
+Evidence
+
+- Cluster Capacity Providers:
+
+  aws ecs describe-clusters --clusters valmetal-prod-web-client --include CONFIGURATIONS
+  # Output: capacityProviders: []
+
+- Service Launch Type:
+
+  aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client
+  # Output: launchType: FARGATE
+
+This configuration ensures that all scaling and capacity management is handled by AWS, in line with best practices and compliance requirements."
+ECS-008,"Partner has defined strategy for leveraging Amazon EC2 Spot and FARGATE_SPOT.  Note that this is only applicable for partners leveraging spot capacity with their Amazon ECS clusters. 
+Spot capacity is appropriate for batch processing, machine-learning workloads, and dev/staging environments where temporary downtime is acceptable.  During high demand, the unavailability of Spot capacity can cause delays in Fargate Spot tasks and EC2 Spot instance launches. However, ECS services and EC2 Auto Scaling groups will retry launches until the required capacity is available. Spot capacity will not be replaced with on-demand capacity. When overall demand increases, instances and tasks may be terminated with a two-minute warning, and tasks should start an orderly shutdown to minimize errors. To minimize Spot shortages, partners should utilize capacity across multiple regions and availability zones, leverage multiple EC2 instance types in autoscaling groups, and use a capacity-optimized Spot allocation strategy
+
+Please provide the following as evidence:
+*Note : Please note that the AWS CLI command below should be run prior to completing the self-assessment*
+
+  * Description of the strategy used to minimize Spot capacity shortages when utilizing EC2 Spot Instances and Fargate Spot.
+  * Output of ""aws ecs describe-capacity-providers —region $region"".
+  * Output of ""aws ec2 describe-spot-fleet-requests —region $region"".
+",,Not applicable - Standard Fargate is used for all production workloads to ensure consistency and reliability,,Not applicable - Standard Fargate is used for all production workloads to ensure consistency and reliability
+ECS-009,"Partner has mechanism for managing multiple Amazon ECS clusters 
+Partners that spread their workloads across multiple Amazon ECS clusters must have a uniform and consistent method for provisioning of container-related infrastructure, and management of workloads across multiple clusters. Use cases for having multiple Amazon ECS clusters include the following as examples:
+
+  * Resource isolation: You might want to create separate Amazon ECS clusters for different applications or environments, to isolate their resources and prevent potential interference between them.
+  * Different deployment pipelines: If you have multiple applications with different deployment pipelines, you can create separate Amazon ECS clusters for each application to manage their deployments independently.
+  * Different scaling requirements: If you have different applications with varying resource utilization patterns, you can create separate Amazon ECS clusters for each application to optimize their scaling and cost.
+  * Different security requirements: If you have different applications with different security requirements, you can create separate Amazon ECS clusters for each application to manage their security independently.
+  * Different network requirements: If you have different applications with different network requirements, you can create separate Amazon ECS clusters for each application to manage their network resources independently.
+
+Please provide the following as evidence for multi-cluster workloads:
+
+  * Description of IaC tool being used to define and deploy Amazon ECS clusters. Partners may also provide sample templates that cover how container related infrastructure is being deployed and managed.
+  * Description of the tool being used for multi-cluster management.
+  * If Amazon ECS clusters and their respective workloads are being deployed on-prem using ECS-A, hybrid scenarios, please provide justification for doing so.
+  * If multiple AWS accounts are being used, please provide description that details how AWS accounts are mapped per cluster/workload and the purpose for each cluster being defined. Example would be a scenario in which an AWS account is being used as the “management” or “control” plane that is then used to deploy Amazon ECS clusters to target AWS accounts.
+",,"We use different AWS accounts for different environments (e.g., production, staging, dev), which is a best practice for isolation, security, and compliance. Each environment’s ECS cluster is provisioned and managed via the same AWS CDK (TypeScript) codebase and CI/CD pipeline, ensuring uniformity and repeatability across all accounts and clusters.
+How this meets multi-cluster best practices:
+Resource & Environment Isolation: Each environment (prod, staging, dev) runs in its own AWS account, with its own ECS cluster, VPC, and supporting resources. This prevents cross-environment interference and enforces strong security boundaries.
+Consistent Provisioning: All clusters and workloads are defined in modular, parameterized CDK code. The same constructs and patterns are used for every environment/account, so there’s no drift or snowflake infrastructure.
+Multi-Account Management: Our CDK deployment pipeline (e.g., GitHub Actions, CodePipeline) is configured to deploy to multiple AWS accounts, mapping each environment to its respective account and cluster. This is managed via environment-specific configuration files and AWS credentials.
+Scalability: If we need more clusters (e.g., for new apps, stricter isolation, or different scaling/security/networking needs), we simply add new CDK config and pipeline targets—no process change required.
+Centralized Control, Decentralized Execution: While the code and pipeline are centrally managed, deployments are executed in the context of each target AWS account, following AWS best practices for least privilege and separation of duties.
+Evidence:
+IaC Tool: AWS CDK (TypeScript) for all ECS and related infrastructure.
+Multi-Account Mapping: Each environment’s cluster is deployed to a separate AWS account, as defined in our CDK config and pipeline.
+Sample CDK pattern: (Can provide on request) – our CDK stacks accept environment/account parameters and deploy clusters/services accordingly.
+Multi-Cluster Management Tool: CDK + CI/CD pipeline (e.g., GitHub Actions, CodePipeline).
+On-Prem/Hybrid: Not applicable; all workloads are on AWS-managed ECS/Fargate.
+Summary:
+We apply AWS best practices for multi-cluster and multi-account management by using CDK and CI/CD to provision and manage isolated ECS clusters in separate AWS accounts for each environment. This ensures strong isolation, security, and operational consistency at scale.",,"We use different AWS accounts for different environments (e.g., production, staging, dev), which is a best practice for isolation, security, and compliance. Each environment’s ECS cluster is provisioned and managed via the same AWS CDK (TypeScript) codebase and CI/CD pipeline, ensuring uniformity and repeatability across all accounts and clusters.
+How this meets multi-cluster best practices:
+Resource & Environment Isolation: Each environment (prod, staging, dev) runs in its own AWS account, with its own ECS cluster, VPC, and supporting resources. This prevents cross-environment interference and enforces strong security boundaries.
+Consistent Provisioning: All clusters and workloads are defined in modular, parameterized CDK code. The same constructs and patterns are used for every environment/account, so there’s no drift or snowflake infrastructure.
+Multi-Account Management: Our CDK deployment pipeline (e.g., GitHub Actions, CodePipeline) is configured to deploy to multiple AWS accounts, mapping each environment to its respective account and cluster. This is managed via environment-specific configuration files and AWS credentials.
+Scalability: If we need more clusters (e.g., for new apps, stricter isolation, or different scaling/security/networking needs), we simply add new CDK config and pipeline targets—no process change required.
+Centralized Control, Decentralized Execution: While the code and pipeline are centrally managed, deployments are executed in the context of each target AWS account, following AWS best practices for least privilege and separation of duties.
+Evidence:
+IaC Tool: AWS CDK (TypeScript) for all ECS and related infrastructure.
+Multi-Account Mapping: Each environment’s cluster is deployed to a separate AWS account, as defined in our CDK config and pipeline.
+Sample CDK pattern: (Can provide on request) – our CDK stacks accept environment/account parameters and deploy clusters/services accordingly.
+Multi-Cluster Management Tool: CDK + CI/CD pipeline (e.g., GitHub Actions, CodePipeline).
+On-Prem/Hybrid: Not applicable; all workloads are on AWS-managed ECS/Fargate.
+Summary:
+We apply AWS best practices for multi-cluster and multi-account management by using CDK and CI/CD to provision and manage isolated ECS clusters in separate AWS accounts for each environment. This ensures strong isolation, security, and operational consistency at scale."
+ECS-010,"Partner uses an image scanning tool that runs a security scan before any image is used within the cluster 
+Any image that is being used within the cluster must be stored in an image repository such as Amazon ECR and must go through a security scan to ensure that there are no security vulnerabilities. The partner should also have a process in place where images are regularly scanned for vulnerabilities.
+
+Please provide the following as evidence:
+
+  * Description of image repository being used for submitted case studies
+  * Description of the tool and configuration used to protect running containers within the cluster. If ECR is being used, task definitions should demonstrate the proper configurations:
+    * Amazon ECR repository policies allow Amazon ECS tasks to pull container images
+    * Image versions in ECR should match versions specified in task definition files
+  * Partner should have monitoring/observability mechanism/tooling to monitor usage of ECR repository to ensure that expected container images are being pulled and stored in Amazon ECR
+",,"Mend security scanning tool implemented for container images
+Images scanned for vulnerabilities as part of the CI/CD pipeline
+Only approved images deployed to production
+Container image scanning integrated into the deployment process",,
+ECS-011,"Partner uses a runtime security tool for all containerized workloads 
+The workloads running inside a cluster must have active protection for any containerized workload that is actively running inside the cluster that includes preventing malicious syscalls being made to the underlying host operating system. Restricting what syscalls can be made from inside the container can help aid in reducing the applications attack surface. Note that runtime security configurations is different between Windows and Linux Containers
+
+Please provide the following as evidence:
+
+  * Amazon ECS cluster has a tool or configuration in place to protect running containers from malicious syscalls being made to the underlying host operating system.
+  * The specific tool or configuration used for protection provides evidence that it is actively protecting running containers
+  * If open-source tooling/third party tooling is being used, provide description of the specific tool and security modules/configurations added
+  * If Windows containers are being used, the robust security boundary within the Windows environment and the tool used to assess running Windows containers
+",,"Container tasks run with minimal required privileges through multiple security measures:
+Non-root users configured within all container images
+Read-only file systems enabled where possible
+Container processes run with specific non-privileged user IDs
+AWS GuardDuty enabled with container insights to detect runtime threats
+Regular security scanning during CI/CD pipeline and runtime
+Container filesystem mounted as read-only where possible with explicit write permissions only for necessary paths",,
+ECS-012,"Use of operating systems optimized for running containerized workloads on Amazon ECS 
+Partner should be leveraging Amazon ECS optimized AMI’s that are optimized for containerized workloads to ensure that customer workloads are protected. At least one of the customer example workloads is implemented on one of the operating systems listed below. Other operating systems may be considered given that the partner provides justification for using such operating system with their Amazon ECS cluster.
+
+  * Amazon Linux
+  * Ubuntu Linux
+  * Bottlerocket OS
+  * Windows
+
+Please provide the following as evidence:
+
+  * Operating system being used as part of the implementation. If a different operating system was implemented outside of the ones listed above, please provide the name of the distribution being used along with the use case
+  * If partner is not using Amazon ECS optimized AMIs, please provide justification as to why
+",,"AWS ECS-optimized AMIs used for container hosting
+Regular updates applied to keep operating systems current
+Security patches applied through automated processes",,
+ECS-013,"Partner has mechanism for addressing compliance standards and frameworks for workloads that must adhere to regulatory compliance standards i.e SOC, PCI, FedRAMP, HIPAA, etc. A comprehensive list of AWS service that in scope by compliance program can be found [here](http://aws.amazon.com/compliance/services-in-scope/) 
+Partners that are working with customers in which the underlying workloads must adhere to compliance standards and frameworks carry the compliance responsibility of ensuring that the sensitivity of customer data, customers compliance objectives, and applicable laws and regulations are addressed based on the specific compliance standard the customer needs to adhere to.
+*Note that if the customer references do not require to adhere to regulatory or compliance standards, the partner may answer with N/A.*
+
+Please provide the following as evidence:
+
+  * Description of internal processes and tooling used to address customer workloads that must adhere to regulatory compliance standards
+  * Description of operational run books that is passed off to the customer after the workload has been implemented that outlines the regulatory compliance guidelines needed to address third-party audits
+",,"Security controls implemented based on client requirements
+Encryption of sensitive data at rest and in transit
+Access controls implemented following least-privilege principle
+Logging and monitoring for security-relevant events",,
+ECS-014,"Amazon ECS capacity deployed on-prem or at different edge locations must follow the best practices for leveraging ECS-A. Applies to Partners deploying solutions that leverage ECS-A. Note that this control is not mandatory for case studies submitted that do not cover on-prem/edge deployments leveraging ECS-A. 
+Amazon ECS capacity being deployed on-prem or at different edge locations must follow the best practices for leveraging ECS-A which can be found here (https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-anywhere.html).
+
+Partners that are leveraging ECS-A for deploying capacity on-prem or at various edge locations must provide the following as evidence
+
+  * Description and/or guidance given to customers that demonstrates the ability to deploy ECS-Anywhere capacity across different environments outside of AWS.
+  * Description and/or guidance given to customers that demonstrates the ability to provision ECS-A capacity at different edge locations. AWS Outposts is considered a valid edge location.
+",,Not applicable - all workloads hosted in AWS.,,
+ECS-015,"Partner has a defined mechanism for ingress to control and configure network traffic into the ECS cluster. 
+Partner should have a strategy around how to control network traffic that is going into the tasks to securely allow traffic into the tasks. This includes specifying the ingress controller of choice and specifying a set of rules to configure ingress traffic. *All layer 7 traffic must be secured with TLS or mTLS.*
+
+Please provide the following as evidence:
+
+  * Description of the ingress controller and infrastructure like: VPCs, NAT Gateways, Subnets, and ENIs  and their configurations. Partners may also provide screenshot or pseudo-code that describes how the ingress method of choice is configured to securely allow traffic into the tasks.
+  * Description of network modes and load balancing systems and their associated configurations; along with elaborations on why certain strategies were used.
+",,"Only load balancers have access to the ECS services
+Proper subnet configuration implemented for network isolation
+Security groups used to restrict access to ECS services
+Network traffic controlled through well-defined security rules
+TLS implemented for secure communications",,
+ECS-016,"Partner has a defined mechanism to address IP Exhaustion when deploying many tasks 
+Partners deploying Tasks to Amazon ECS need to adhere to the potential networking concerns around IP exhaustion within the VPC that the tasks are being deployed to. There are a variety of mechanisms to address IP exhaustion with various systems available within Amazon ECS. Note that if auto-scaling groups or managed node groups are being used then this does not apply to Fargate use cases.
+
+Please provide the following as evidence:
+
+  * Description on strategy about how to address IP exhaustion within the VPC that the ECS Tasks are being deployed to such as, Multiple subnets, custom ENI configurations with Trunking, changing task density based on official documentation found here:[AWS ECS Documentation for IP Exhaustion](https://docs.aws.amazon.com/pdfs/AmazonECS/latest/bestpracticesguide/bestpracticesguide.pdf#%5B%7B%22num%22%3A1407%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C72%2C213.821%2Cnull%5D)
+",,Not applicable - Current architecture and scale does not present IP exhaustion concerns,,
+ECS-017,"Partner has mechanisms to facilitate communication within the customer’s services, AWS Services and external systems. 
+Partners deploying tasks to Amazon ECS need to consider the collection of customer tasks and ensure communication between them is facilitated without traversing external load balancers. There are a variety of mechanisms to permit communication within ECS, with AWS services and with other external systems.
+
+Please provide the following as evidence:
+
+  * Description of networking choices made to connect to AWS Services, to customer services, to external systems such as, service mesh (ECS Service Connect or AppMesh), internal load balancers, integration with API gateway, etc based on official documentation found here: [AWS ECS Documentation for connectivity](https://docs.aws.amazon.com/pdfs/AmazonECS/latest/bestpracticesguide/bestpracticesguide.pdf#%5B%7B%22num%22%3A1436%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C72%2C712.8%2Cnull%5D)
+",,"ECS services access AWS services and external systems through NAT gateways
+Security groups configured to allow only necessary traffic between services
+Proper subnet placement ensures communication between application components
+Network architecture designed to secure traffic while maintaining service connectivity
+Security groups rules tightly scoped to only required ports and protocols
+Database connections secured through proper network controls
+",,
+ECS-018,"Solutions have proper observability mechanisms in place 
+Partner must have proper observability mechanisms in place that address logging, metrics, and tracing with ability to drill down to the individual app/container level:
+
+  1. Ability to collect and filter metrics at both the application/container layer and the infrastructure layer.
+  2. Ability to capture metrics and logs during service-level scaling event
+  3. Ability to support monitoring of several environments - environments that span multiple AWS Regions, accounts, and/or hybrid (ECS & ECS Anywhere, if applicable)
+  4. Ability to support distributed tracing to analyze and debug applications running within an Amazon ECS cluster
+
+Please provide the following as evidence:
+
+  * Description of observability mechanism that addresses the above.
+
+Persistent Storage: Partner should follow the best practices for persistent storage use to maintain reliability, availability and performance of the customer applications deployed within Amazon ECS
+",,"Comprehensive observability solution implemented across all layers:
+
+Collection and filtering of metrics at both levels:
+Application layer: Custom metrics emitted from application code
+Container layer: CPU, memory, disk I/O metrics captured per container
+Infrastructure layer: ECS cluster and Fargate platform metrics
+
+Capturing metrics during scaling events:
+CloudWatch Container Insights enabled for capturing task metrics
+Custom scaling event logging captures state before and after scaling
+Auto-scaling activity is recorded and analyzed
+Capacity metrics tracked during scaling transitions
+
+Environment-specific alarm thresholds configured
+Real-time alerting configured for critical metrics
+Custom dashboards providing business and technical views
+",,
+ECS-019,"Partners have selected storage options best suited for the needs of the application based upon scalability, access latency, performance and OS requirements 
+Partner must determine the storage needs of the ECS tasks and provision the appropriate type of storage for the containers. Best-practice matching use cases for storage each type include:
+
+  * EFS for Linux containers on Fargate or EC2 with concurrent access and horizontal scalability requirements
+  * EBS for EC2 deployed transactional database applications with sub-millisecond latency requirements, that do not require a shared file system when scaled horizontally. (EBS is unavailable for Fargate deployments currently).
+  * External Database service integrations for workloads without ultra-low latency requirements
+  * EBS for workloads that require high performance storage during their lifecycle but do not require data persistence after task completion
+  * Docker Volumes plugin may be used for ECS tasks using the docker container runtime provided they are hosted on an EC2 instance with an EBS volume available to mount to,  however use of this volume type may result in data loss if the instance is stopped and the task is relocated
+  * FSx for Windows File Server for clusters that contain windows instances
+  * Other 3rd party plugins or integrations may be used depending on the specific requirements for the workload and performance characteristics of the storage option selected
+
+Please Provide the following as evidence:
+
+  * Description of the workload and storage selected, required (or expected) performance metrics needed and the reasoning for each storage/workload pairing
+",,"S3 used for document storage and archival
+RDS databases used for structured data storage
+Storage solutions selected based on data access patterns and requirements
+Appropriate IAM permissions configured for storage access",,
+ECS-020,"Workloads using Amazon Elastic File System (EFS) for persistent storage provide a mount target in each availability zone that will host ECS tasks 
+For workloads that utilize EFS, an Amazon ECS task can only mount an Amazon EFS file system if the Amazon EFS filesystem has a mount target in the Availability Zone the task runs in. The Partner must ensure all Availability zones that will run tasks have a mount point available so that storage is accessible throughout the cluster
+
+Please provide the following as evidence:
+
+  * Confirmation of whether EFS was or was not used (If no EFS was used, this requirement is N/A)
+  * A list of the Availability zones that are expected to run tasks, and confirmation that access points have been made in each of these availability zones
+",,Not applicable - EFS is not used in this implementation,,
+ECS-021,"Access to Persistent Storage is secure and only accessible to applications that need it. 
+Access restrictions can be applied via several methods:
+
+  * Security Groups can be configured to permit and deny traffic to EFS mount targets on port 2049 based upon the security group connected to the ECS instances, or when using awsvpc network mode within the cluster at the ECS task level
+  * ECS tasks can be configured to require an IAM role for file system access when mounting to the EFS file system. See Using IAM to control file system data access (https://docs.aws.amazon.com/efs/latest/ug/iam-access-control-nfs-efs.html) in the Amazon Elastic File System User Guide.
+  * Amazon EFS access points are application-specific entry points into an Amazon EFS file system. You can use access points to enforce a user identity, including the user's POSIX groups, for all file system requests that are made through the access point. Access points can also enforce a different root directory for the file system. This is so that clients can only access data in the specified directory or its sub-directories.
+
+Please Provide the following as evidence:
+
+  * Description of how access requirements were evaluated
+  * Description of the method chosen to secure access to only the entities requiring access
+  * Example configuration showing the access control in place (Security group configuration, IAM role based EFS access setup, EFS Access point identity requirements)
+",,"IAM roles for tasks limit access to specific storage resources
+Security groups restrict database access to authorized services
+S3 bucket policies enforce least-privilege access
+Encryption implemented for data at rest / in transit",,
+ECS-022,"Workloads using EBS to persist container data utilize task placement constraints appropriately to maintain access to data throughout the task lifecycle 
+When using EBS to store data for tasks in Amazon EC2, it's recommended to use task placement constraints to ensure that the task and its data are kept together. This is important for applications that need to persist data after the task ends, like a MySQL database. For tasks that don't need to persist data, task placement constraints are not necessary. For example, a task that processes large amounts of data may need high performance storage, which EBS can provide, but data persistence is not important.
+
+Please provide the following as evidence:
+
+  * List of EBS volumes and tasks associated with each volume
+  * Task description for each workload using an EBS volume, and data persistency requirements
+  * If the workload(s) required data to persist outside the task’s lifecycle, provide an example of the task placement constraints that will ensure restarted tasks are placed with the EBS volume they require
+",,Not applicable - EBS is not used for container data in this implementation,,
+ECS-023,"Partner has mechanism for addressing multi-tenant workloads 
+Partners that are implementing multi-tenant workloads on behalf of their customer must be aware of the various levels of tenancy that can be achieved on Amazon ECS. “Soft” isolation or multi-tenancy on Amazon ECS is the approach of leveraging task level resource quotas, tenant specific IAM roles for ECS tasks, and namespaces in AWS Cloud Map to create isolation boundaries between tasks within an Amazon ECS cluster.
+
+Please provide the following as evidence:
+
+  * Task definition file used as part of the case study submitted that has resource quotas defined in the task file
+  * IAM role that is used as part of the case study submitted to isolate tenants operating within the same ECS cluster
+  * Namespace configuration defined for service discovery in AWS Cloud Map
+
+Partners that need to adhere to highly-regulated industries or in SaaS environments where strong isolation is required, the partner must demonstrate that they understand the drawbacks of operating in an environment with strong multi-tenancy requirements. This typically includes tenants having their own fully isolated ECS cluster along with tenants having their own dedicated AWS account.
+
+Please provide the following as evidence:
+
+  * Short description of the specific requirements set out by the client that constitutes operating in an environment with hard multi-tenancy.
+  * Description of a Tenant Operator being used to manage tenants within a cluster.
+  * Tooling/ISV solution to help run/manage multiple virtualized clusters on a single underlying cluster which allows for hard(er) multi-tenancy.
+  * Tooling/ISV solution to help run/manage multiple AWS accounts i.e AWS Organizations
+",,"Application-level multi-tenancy implemented
+Data isolation enforced through application logic
+Tenant boundaries maintained at the database level
+No need for infrastructure-level tenant isolation based on requirements",,
