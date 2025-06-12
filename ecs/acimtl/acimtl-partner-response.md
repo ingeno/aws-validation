@@ -295,3 +295,15 @@ The ACI-MTL platform secures access to persistent storage (RDS and S3) through *
 - **API Service**: IAM task role with RDS and S3 permissions
 - **Web Client**: No storage permissions in IAM task role
 - **VPC Security**: Database in private subnets, accessible only via VPC
+
+## ECS-022: EBS Task Placement Constraints
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not use EBS volumes for container data persistence. EBS volumes are not supported with Fargate launch type.
+
+## ECS-023: Multi-Tenant Workloads
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform is designed as a **single-tenant application**. There is only one production deployment that manages multiple shelters.
