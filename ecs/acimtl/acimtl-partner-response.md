@@ -267,3 +267,31 @@ The ACI-MTL platform uses **external database services** and **object storage** 
 - **RDS**: Sub-second query response for database operations, automated scaling and backup
 - **S3**: Standard access latency acceptable for file storage, cost-effective for document retention
 - **Stateless Design**: No container-level storage needed, simplifies deployment and scaling
+
+## ECS-020: EFS Mount Targets in Availability Zones
+
+### Response
+
+**Not Applicable** - The ACI-MTL platform does not use Amazon Elastic File System (EFS) for persistent storage.
+
+## ECS-021: Secure Access to Persistent Storage
+
+### Response
+
+The ACI-MTL platform secures access to persistent storage (RDS and S3) through **IAM roles and VPC security controls** limiting access to only applications that require it.
+
+### Evidence
+
+#### **Access Requirements Evaluation**
+
+**Storage Access Analysis:**
+- **RDS Database**: Only API service requires database access for application data
+- **S3 File Storage**: Only API service requires file upload/download capabilities
+- **Web Client**: No direct storage access required
+
+#### **Security Method**
+
+**IAM Role-Based Access Control:**
+- **API Service**: IAM task role with RDS and S3 permissions
+- **Web Client**: No storage permissions in IAM task role
+- **VPC Security**: Database in private subnets, accessible only via VPC
