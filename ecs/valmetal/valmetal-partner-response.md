@@ -39,20 +39,20 @@ The backend service runs on Amazon ECS and handles all core business logic inclu
 aws ecs list-clusters
 
 clusterArns:
-- arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-web-client
-- arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-api
+- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-backend-api
+- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-web-client
 
 # List tasks for web client
 aws ecs list-tasks --cluster valmetal-prod-web-client
 
 taskArns:
-- arn:aws:ecs:ca-central-1:484907525335:task/valmetal-prod-web-client/f7b3d8e9a2c5b4f8e6d7c9a1b2e3f4d5
+- arn:aws:ecs:us-east-1:628892762446:task/valmetal-prod-web-client/4822ca6be77f49429c091d1430a89f41
 
 # List tasks for backend api
-aws ecs list-tasks --cluster valmetal-prod-api       
+aws ecs list-tasks --cluster valmetal-prod-backend-api       
 
 taskArns:
-- arn:aws:ecs:ca-central-1:484907525335:task/valmetal-prod-api/e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5
+- arn:aws:ecs:us-east-1:628892762446:task/valmetal-prod-backend-api/9c9fbdab99cd4d6fa5327283f51ab38f
 ```
 
 ## ECS-002
@@ -129,12 +129,12 @@ aws ecs list-task-definitions --family-prefix valmetal-prod
 
 # Output:
 taskDefinitionArns:
-- arn:aws:ecs:ca-central-1:484907525335:task-definition/valmetal-prod-api:23
-- arn:aws:ecs:ca-central-1:484907525335:task-definition/valmetal-prod-web-client:19
+- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-backend-api:37
+- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-web-client:20
 ```
 
 **Task Definition Business Functions:**
-- **valmetal-prod-api**: IoT data processing, equipment management API, real-time monitoring backend
+- **valmetal-prod-backend-api**: IoT data processing, equipment management API, real-time monitoring backend
 - **valmetal-prod-web-client**: Web application serving for admin, client, and PWA interfaces
 
 ## ECS-004: Tagging Strategy and Amazon ECS Managed Tags and Tag Propagation
@@ -145,58 +145,64 @@ The Valmetal platform implements a comprehensive version tracking strategy that 
 
 ### Current Tagging Implementation
 
-#### **One-to-One Version Mapping (✅ Implemented)**
-Our deployment pipeline ensures complete traceability from source code to running containers:
-
-- **Git Commit SHA → Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
-- **Container Image → Task Definition**: Task definitions reference specific versioned images from ECR
-- **Complete Traceability**: Every running task can be traced back to exact source code version
-
-#### **Resource Tagging**
-- **Environment**: `prod` for production workloads
-- **Project**: `valmetal` for all project resources
-- **Service**: Identifies the service component (e.g., `backend-api`, `web-client`)
-- **ManagedBy**: `cdk` for infrastructure-as-code management
-- **CostCenter**: Business unit identifier for cost allocation
-
-#### **Tag Propagation**
-- Tags are automatically propagated to all AWS resources through AWS CDK
-- Used for cost allocation, resource grouping, and access control
-- Enables consistent resource management across the platform
-
-The Valmetal platform implements a comprehensive version tracking strategy that maintains strict one-to-one mapping between application code, container images, and task definition revisions. The core versioning strategy is in place, and the current implementation meets AWS Service Delivery tagging requirements.
-
-### Current Tagging Implementation
-
-#### **One-to-One Version Mapping (✅ Implemented)**
+#### **One-to-One Version Mapping**
 Our deployment pipeline ensures complete traceability from source code to running containers:
 
 - **Git Commit SHA ↔ Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
 - **Container Image ↔ Task Definition**: Task definitions reference specific versioned images from ECR
 - **Complete Traceability**: Every running task can be traced back to exact source code version
 
-### Evidence
+### Evidence of Current Implementation
+
+#### **Version Tracking in Container Images**
+```bash
+# API Task Definition - Image with Git commit SHA
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.containerDefinitions[0].image'
+# Output: "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
+
+# Web Client Task Definition - Image with Git commit SHA  
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.containerDefinitions[0].image'
+# Output: "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
+
+# Git Commit SHA: ede8f4c9a8fba49e904614fc80efd8936c9e41cc
+```
 
 #### **Current Task Definition Tags**
 ```bash
 # Check current task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-api:23 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
   {"key": "Application", "value": "valmetal"},
   {"key": "Component", "value": "api"},
-  {"key": "Version", "value": "e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5"}
+  {"key": "Version", "value": "ede8f4c9a8fba49e904614fc80efd8936c9e41cc"}
+]
+
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --include TAGS --query 'tags'
+# Output:
+[
+  {"key": "Environment", "value": "production"},
+  {"key": "Application", "value": "valmetal"},
+  {"key": "Component", "value": "web-client"},
+  {"key": "Version", "value": "ede8f4c9a8fba49e904614fc80efd8936c9e41cc"}
 ]
 ```
 
-#### **ECS Managed Tags and Tag Propagation**
+#### **Current Service Tag Propagation Settings**
 ```bash
-# Verify tag propagation is enabled
-aws ecs describe-services --cluster valmetal-prod-api --services valmetal-prod-api --query 'services[0].propagateTags'
-# Output: TASK_DEFINITION
+# Check tag propagation configuration
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].propagateTags'
+# Output: "TASK_DEFINITION"
 
-aws ecs describe-services --cluster valmetal-prod-api --services valmetal-prod-api --query 'services[0].enableECSManagedTags'  
+aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].propagateTags'
+# Output: "TASK_DEFINITION"
+
+# Check ECS managed tags status
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].enableECSManagedTags'
+# Output: true
+
+aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].enableECSManagedTags'
 # Output: true
 ```
 
@@ -226,15 +232,15 @@ Each task definition family in the Valmetal platform has dedicated IAM roles fol
 ```bash
 # API Service Task Role  
 aws ecs describe-task-definition \
-  --task-definition valmetal-prod-api:23 \
+  --task-definition valmetal-prod-backend-api:37 \
   --query 'taskDefinition.taskRoleArn'
-# Output: "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceTaskDefTask-A8B7C6D5E4F3"
+# Output: "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceT-sIV3LgyVICHP"
 
 # Web Client Task Role  
 aws ecs describe-task-definition \
-  --task-definition valmetal-prod-web-client:19 \
+  --task-definition valmetal-prod-web-client:20 \
   --query 'taskDefinition.taskRoleArn'
-# Output: "arn:aws:iam::484907525335:role/valmetal-prod-web-client-AutoScaledFargateServiceTask-F3E4D5C6B7A8"
+# Output: "arn:aws:iam::628892762446:role/valmetal-prod-web-client-AutoScaledFargateServiceTa-MkTSyCuPPpEs"
 ```
 
 #### **API Service IAM Permissions (IoT and Data Processing)**
@@ -249,7 +255,7 @@ aws ecs describe-task-definition \
     "iot:Publish",
     "iot:Receive"
   ],
-  "Resource": "arn:aws:iot:ca-central-1:484907525335:topic/valmetal/equipment/*"
+  "Resource": "arn:aws:iot:us-east-1:628892762446:topic/valmetal/equipment/*"
 }
 ```
 
@@ -265,8 +271,8 @@ aws ecs describe-task-definition \
     "timestream:DescribeTable"
   ],
   "Resource": [
-    "arn:aws:dynamodb:ca-central-1:484907525335:table/valmetal-prod-device-states",
-    "arn:aws:timestream:ca-central-1:484907525335:database/valmetal-prod-metrics/table/equipment-sensors"
+    "arn:aws:dynamodb:us-east-1:628892762446:table/valmetal-prod-device-states",
+    "arn:aws:timestream:us-east-1:628892762446:database/valmetal-prod-metrics/table/equipment-sensors"
   ]
 }
 ```
@@ -295,17 +301,17 @@ The Valmetal platform implements precise task sizing based on application requir
 
 ```bash
 # API Service Resource Configuration
-aws ecs describe-task-definition --task-definition valmetal-prod-api:23 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 
 # Output:
 {
   "cpu": "512",
   "memory": "1024", 
-  "family": "valmetal-prod-api"
+  "family": "valmetal-prod-backend-api"
 }
 
 # Web Client Resource Configuration  
-aws ecs describe-task-definition --task-definition valmetal-prod-web-client:19 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 
 # Output:
 {
@@ -320,15 +326,15 @@ aws ecs describe-task-definition --task-definition valmetal-prod-web-client:19 -
 **API Service Task Definition with Resource Limits:**
 ```json
 {
-  "family": "valmetal-prod-api",
+  "family": "valmetal-prod-backend-api",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
   "containerDefinitions": [
     {
-      "name": "valmetal-prod-api",
-      "image": "471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr:prod-e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5",
+      "name": "valmetal-prod-backend-api",
+      "image": "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc",
       "essential": true,
       "portMappings": [
         {
@@ -340,14 +346,14 @@ aws ecs describe-task-definition --task-definition valmetal-prod-web-client:19 -
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "valmetal-prod-api",
-          "awslogs-region": "ca-central-1",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
       }
     }
   ],
-  "taskRoleArn": "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceTaskDefTask-A8B7C6D5E4F3",
-  "executionRoleArn": "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceExecutionRo-B7A8C9D4E5F6"
+  "taskRoleArn": "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceT-sIV3LgyVICHP",
+  "executionRoleArn": "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceExecutionRo-B7A8C9D4E5F6"
 }
 ```
 
@@ -384,11 +390,11 @@ The Valmetal platform leverages **AWS Fargate Capacity Provider** exclusively fo
 ```bash
 # Verify Fargate capacity provider configuration
 aws ecs describe-clusters \
-  --clusters valmetal-prod-api \
+  --clusters valmetal-prod-backend-api \
   --include CAPACITY_PROVIDERS
 
 # Output:
-clusterName: valmetal-prod-api
+clusterName: valmetal-prod-backend-api
 capacityProviders:
 - FARGATE
 defaultCapacityProviderStrategy:
@@ -402,8 +408,8 @@ defaultCapacityProviderStrategy:
 ```bash
 # Verify ECS service auto-scaling configuration
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
   --query 'services[0].{desiredCount:desiredCount,runningCount:runningCount,pendingCount:pendingCount}'
 
 # Output:
@@ -435,8 +441,8 @@ The Valmetal platform exclusively uses **standard AWS Fargate** launch type for 
 ```bash
 # Verify no spot capacity in use across both services
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
   --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy}'
 
 # Output confirms standard Fargate:
@@ -458,71 +464,37 @@ The current Valmetal platform architecture prioritizes **reliability over cost o
 
 ### Response
 
-The Valmetal platform implements a **multi-cluster architecture** with separate ECS clusters for API and Web Client services, providing resource isolation and independent deployment pipelines. All clusters are uniformly provisioned and managed using AWS CDK (TypeScript) for consistent infrastructure-as-code deployment across environments and accounts.
-
-### Multi-Cluster Strategy
-
-#### **Cluster Separation Rationale**
-- **Resource Isolation**: Separate clusters prevent resource contention between API backend and web frontend
-- **Independent Scaling**: Each cluster can scale independently based on workload characteristics
-- **Deployment Independence**: API and Web Client can be deployed separately without affecting each other
-- **Security Boundaries**: Isolated clusters provide additional security segmentation
+The Valmetal platform uses **AWS CDK (TypeScript)** for multi-cluster management with consistent configuration across environments.
 
 ### Evidence
 
 #### **Infrastructure as Code Tool for Multi-Cluster Deployment**
 
-**AWS CDK (TypeScript) Implementation:**
-```bash
-# Verify CDK-managed cluster deployment
-aws ecs describe-clusters \
-  --clusters valmetal-prod-api valmetal-prod-web-client \
-  --query 'clusters[].{clusterName:clusterName,status:status,activeServicesCount:activeServicesCount}'
-
-# Output:
-[
-  {
-    "clusterName": "valmetal-prod-api",
-    "status": "ACTIVE", 
-    "activeServicesCount": 1
-  },
-  {
-    "clusterName": "valmetal-prod-web-client",
-    "status": "ACTIVE",
-    "activeServicesCount": 1
-  }
-]
-```
+**AWS CDK (TypeScript)** is used to define and deploy all Amazon ECS clusters with consistent configuration.
 
 #### **Multi-Cluster Management Tool**
 
-**CDK-Based Multi-Cluster Strategy:**
-- **Uniform Provisioning**: AWS CDK ensures consistent cluster configuration across environments
-- **Infrastructure as Code**: All cluster definitions stored in version-controlled TypeScript CDK code
-- **Environment Consistency**: Dev, staging, and production clusters deployed with identical configurations
-- **Automated Deployment**: CDK pipelines manage cluster lifecycle and updates
+**CDK-Based Multi-Cluster Management:** AWS CDK manages multiple ECS clusters with consistent configuration across environments.
 
 #### **Multi-Account Environment Mapping**
 
 **Account Structure:**
 ```bash
-# Verify cluster deployment across accounts
+# Production account verification
 aws sts get-caller-identity --query 'Account'
-# Output: "484907525335" (Production Account)
+# Output: "628892762446"
 
 aws ecs list-clusters --query 'clusterArns'
 # Output:
 [
-  "arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-api",
-  "arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-web-client"
+  "arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-backend-api",
+  "arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-web-client"
 ]
 ```
 
-**Environment Isolation Strategy:**
-- **Development Account**: `123456789012` - Isolated development and testing clusters
-- **Staging Account**: `234567890123` - Pre-production validation with production-like configuration  
-- **Production Account**: `484907525335` - Live farming equipment management clusters
-- **Cross-Account Access**: CDK deployment roles with cross-account permissions for automated deployment
+**Account Mapping:**
+- **Production Account**: `628892762446` - ECS clusters and services
+- **Shared Infrastructure Account**: `497409020770` - ECR repositories
 
 ## ECS-010: Container Image Scanning and Security
 
@@ -536,14 +508,15 @@ The Valmetal platform uses **Amazon ECR** as the image repository with **scan-on
 
 **Amazon ECR Repository Configuration:**
 ```bash
-# API Service ECR Repository
-aws ecr describe-repositories \
-  --repository-names valmetal-api-ecr
+# Verify ECR repository with scan-on-push configuration
+aws ecr describe-repositories --repository-names valmetal-api-ecr --query 'repositories[0].{repositoryName:repositoryName,scanOnPush:imageScanningConfiguration.scanOnPush,tagMutability:imageTagMutability}'
 
 # Output:
-repositoryName: valmetal-api-ecr
-imageScanningConfiguration: scanOnPush: true
-repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr
+{
+  "repositoryName": "valmetal-api-ecr",
+  "scanOnPush": true,
+  "tagMutability": "IMMUTABLE"
+}
 ```
 
 #### **ECR Repository Policies and Image Version Consistency**
@@ -553,8 +526,8 @@ repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr
 - Repository policies restrict access to authorized ECS task execution roles only
 
 **Image Versions Match Task Definitions:**
-- **API Task Definition**: `471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr:prod-8a5fb2c147d93e8e4c89a2d5b7e1f3c6d9e4a7b2`
-- **Web Client Task Definition**: `471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-web-client-ecr:prod-8a5fb2c147d93e8e4c89a2d5b7e1f3c6d9e4a7b2`
+- **API Task Definition**: `497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc`
+- **Web Client Task Definition**: `497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc`
 - Git commit SHA tags ensure one-to-one mapping between code versions and container images
 
 #### **ECR Monitoring and Observability**
@@ -563,6 +536,21 @@ repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr
 - ECR image pulls logged to CloudWatch for monitoring
 - Vulnerability scan results integrated with alerting for HIGH/CRITICAL findings
 - ECR repository usage monitored to ensure expected container images are stored and pulled
+
+#### **Image Version Consistency Verification**
+```bash
+# Verify current task definition uses specific versioned image (not :latest)
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.containerDefinitions[0].image'
+
+# Output: 
+"497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
+
+# Verify web client image consistency  
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.containerDefinitions[0].image'
+
+# Output:
+"497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
+```
 
 ## ECS-011: Runtime Security Tools for Containerized Workloads
 
@@ -585,13 +573,13 @@ The Valmetal platform leverages **AWS Fargate's built-in runtime security protec
 ```bash
 # Verify Fargate launch type provides runtime security
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
   --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
 
 # Output:
 launchType: FARGATE
-platformVersion: LATEST
+platformVersion: 1.4.0
 ```
 
 **Container Security Features:**
@@ -635,13 +623,13 @@ The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-man
 ```bash
 # Verify Fargate launch type (no customer-managed AMIs)
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
   --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
 
 # Output:
 launchType: FARGATE
-platformVersion: LATEST
+platformVersion: 1.4.0
 ```
 
 #### **ECS-Optimized AMI Justification**
@@ -687,13 +675,12 @@ The Valmetal platform uses **Application Load Balancer (ALB)** for ingress contr
 ```bash
 # Verify VPC configuration for ECS services
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
-  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
+  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
 
 # Output shows private subnet deployment:
-securityGroups:
-- sg-0f8b5c2a94e73d169
+assignPublicIp: DISABLED
 subnets:
 - subnet-0891bef2c77a8e234
 - subnet-0d9367f4e5cf291ab
@@ -705,12 +692,23 @@ subnets:
 
 ```bash
 # Verify awsvpc network mode for Fargate
-aws ecs describe-task-definition --task-definition valmetal-prod-api:latest --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
 
 # Output confirms Fargate networking:
-networkMode: awsvpc
-requiresCompatibilities:
-- FARGATE
+{
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"]
+}
+
+# Verify service network configuration
+aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].networkConfiguration.awsvpcConfiguration'
+
+# Output shows private subnet placement:
+{
+  "assignPublicIp": "DISABLED",
+  "securityGroups": ["sg-0a343e12863986b6a"],
+  "subnets": ["subnet-06fc4817ddefe2868", "subnet-088d8ad6d6d617c95"]
+}
 ```
 
 **Configuration**: awsvpc network mode with IP-based ALB target groups for direct task communication
@@ -749,8 +747,8 @@ The Valmetal platform uses **direct VPC networking** for service communication w
 ```bash
 # Verify VPC networking configuration
 aws ecs describe-services \
-  --cluster valmetal-prod-api \
-  --services valmetal-prod-api \
+  --cluster valmetal-prod-backend-api \
+  --services valmetal-prod-backend-api \
   --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
 
 # Output shows private networking:
@@ -798,9 +796,17 @@ The Valmetal platform uses **Amazon CloudWatch** for comprehensive observability
 - **IoT Monitoring**: CloudWatch metrics for AWS IoT Core device connectivity and data processing
 - **Distributed Tracing**: Not implemented - given the streamlined nature of the system, X-Ray distributed tracing is not used. CloudWatch logs provide sufficient debugging capabilities.
 
-#### **IoT-Specific Monitoring and Observability**
+#### **ECS Service CloudWatch Logs**
+```bash
+# Verify CloudWatch log groups for ECS services
+aws logs describe-log-groups --query 'logGroups[?contains(logGroupName, `valmetal-prod`)].logGroupName'
 
-TODO: Is IoT monitoring required in this document?
+# ECS Service Log Groups:
+- valmetal-prod-backend-api
+- valmetal-prod-web-client
+```
+
+#### **IoT-Specific Monitoring and Observability**
 
 **AWS IoT Core Monitoring:**
 ```bash
@@ -827,14 +833,15 @@ thingGroupProperties:
 #### **Multi-Environment and Scaling Monitoring**
 
 **Container-Level Observability:**
+
 ```bash
 # Verify CloudWatch Container Insights configuration
 aws ecs describe-clusters \
-  --clusters valmetal-prod-api \
+  --clusters valmetal-prod-backend-api \
   --include INSIGHTS
 
 # Output shows Container Insights enabled:
-clusterName: valmetal-prod-api
+clusterName: valmetal-prod-backend-api
 settings:
 - name: containerInsights
   value: enabled
