@@ -106,6 +106,29 @@ The Valmetal platform implements a comprehensive version tracking strategy that 
 #### **One-to-One Version Mapping (✅ Implemented)**
 Our deployment pipeline ensures complete traceability from source code to running containers:
 
+- **Git Commit SHA → Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
+- **Container Image → Task Definition**: Task definitions reference specific versioned images from ECR
+- **Complete Traceability**: Every running task can be traced back to exact source code version
+
+#### **Resource Tagging**
+- **Environment**: `prod` for production workloads
+- **Project**: `valmetal` for all project resources
+- **Service**: Identifies the service component (e.g., `backend-api`, `web-client`)
+- **ManagedBy**: `cdk` for infrastructure-as-code management
+- **CostCenter**: Business unit identifier for cost allocation
+
+#### **Tag Propagation**
+- Tags are automatically propagated to all AWS resources through AWS CDK
+- Used for cost allocation, resource grouping, and access control
+- Enables consistent resource management across the platform
+
+The Valmetal platform implements a comprehensive version tracking strategy that maintains strict one-to-one mapping between application code, container images, and task definition revisions. The core versioning strategy is in place, and the current implementation meets AWS Service Delivery tagging requirements.
+
+### Current Tagging Implementation
+
+#### **One-to-One Version Mapping (✅ Implemented)**
+Our deployment pipeline ensures complete traceability from source code to running containers:
+
 - **Git Commit SHA ↔ Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
 - **Container Image ↔ Task Definition**: Task definitions reference specific versioned images from ECR
 - **Complete Traceability**: Every running task can be traced back to exact source code version
