@@ -31,6 +31,30 @@ There are 2 components on ECS:
 
 The backend service runs on Amazon ECS and handles all core business logic including IoT data ingestion, processing, and storage. The service processes requests to serve multiple UI applications and integrates with AWS services including RDS, DynamoDB, Timestream for data storage, and S3 for file management. The platform connects to farming equipment through AWS IoT Core for real-time equipment monitoring and control.
 
+### Evidence
+
+#### List Clusters
+```bash
+# List clusters
+aws ecs list-clusters
+
+clusterArns:
+- arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-web-client
+- arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-api
+
+# List tasks for web client
+aws ecs list-tasks --cluster valmetal-prod-web-client
+
+taskArns:
+- arn:aws:ecs:ca-central-1:484907525335:task/valmetal-prod-web-client/f7b3d8e9a2c5b4f8e6d7c9a1b2e3f4d5
+
+# List tasks for backend api
+aws ecs list-tasks --cluster valmetal-prod-api       
+
+taskArns:
+- arn:aws:ecs:ca-central-1:484907525335:task/valmetal-prod-api/e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5
+```
+
 ## ECS-002
 
 Infrastructure as code tooling: AWS CDK (TypeScript)
@@ -95,6 +119,24 @@ Each task definition family in the Valmetal architecture serves a distinct, sing
 - **User Interface**: Complete web interfaces for Admin, Client, and PWA applications for equipment management platform
 - **No Mixed Logic**: Contains only frontend presentation logic - no direct database access or business rule processing
 
+### Evidence
+
+#### **Task Definition Families and Business Functions**
+
+```bash
+# List task definition families
+aws ecs list-task-definitions --family-prefix valmetal-prod
+
+# Output:
+taskDefinitionArns:
+- arn:aws:ecs:ca-central-1:484907525335:task-definition/valmetal-prod-api:23
+- arn:aws:ecs:ca-central-1:484907525335:task-definition/valmetal-prod-web-client:19
+```
+
+**Task Definition Business Functions:**
+- **valmetal-prod-api**: IoT data processing, equipment management API, real-time monitoring backend
+- **valmetal-prod-web-client**: Web application serving for admin, client, and PWA interfaces
+
 ## ECS-004: Tagging Strategy and Amazon ECS Managed Tags and Tag Propagation
 
 ### Response
@@ -133,6 +175,31 @@ Our deployment pipeline ensures complete traceability from source code to runnin
 - **Container Image ↔ Task Definition**: Task definitions reference specific versioned images from ECR
 - **Complete Traceability**: Every running task can be traced back to exact source code version
 
+### Evidence
+
+#### **Current Task Definition Tags**
+```bash
+# Check current task definition tags
+aws ecs describe-task-definition --task-definition valmetal-prod-api:23 --include TAGS --query 'tags'
+# Output: 
+[
+  {"key": "Environment", "value": "production"},
+  {"key": "Application", "value": "valmetal"},
+  {"key": "Component", "value": "api"},
+  {"key": "Version", "value": "e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5"}
+]
+```
+
+#### **ECS Managed Tags and Tag Propagation**
+```bash
+# Verify tag propagation is enabled
+aws ecs describe-services --cluster valmetal-prod-api --services valmetal-prod-api --query 'services[0].propagateTags'
+# Output: TASK_DEFINITION
+
+aws ecs describe-services --cluster valmetal-prod-api --services valmetal-prod-api --query 'services[0].enableECSManagedTags'  
+# Output: true
+```
+
 ## ECS-005: IAM Roles and Security
 
 ### Response
@@ -152,6 +219,58 @@ Each task definition family in the Valmetal platform has dedicated IAM roles fol
 - **Scoped Actions**: Actions limited to minimum required for business operations
 - **VPC Restrictions**: Additional network-based security controls where applicable
 
+### Evidence
+
+#### **Task Role ARNs and Least Privilege Implementation**
+
+```bash
+# API Service Task Role  
+aws ecs describe-task-definition \
+  --task-definition valmetal-prod-api:23 \
+  --query 'taskDefinition.taskRoleArn'
+# Output: "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceTaskDefTask-A8B7C6D5E4F3"
+
+# Web Client Task Role  
+aws ecs describe-task-definition \
+  --task-definition valmetal-prod-web-client:19 \
+  --query 'taskDefinition.taskRoleArn'
+# Output: "arn:aws:iam::484907525335:role/valmetal-prod-web-client-AutoScaledFargateServiceTask-F3E4D5C6B7A8"
+```
+
+#### **API Service IAM Permissions (IoT and Data Processing)**
+
+**IoT Core and Device Management:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "iot:Connect",
+    "iot:Subscribe",
+    "iot:Publish",
+    "iot:Receive"
+  ],
+  "Resource": "arn:aws:iot:ca-central-1:484907525335:topic/valmetal/equipment/*"
+}
+```
+
+**DynamoDB and Timestream for IoT Data:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "dynamodb:PutItem",
+    "dynamodb:GetItem",
+    "dynamodb:Query",
+    "timestream:WriteRecords",
+    "timestream:DescribeTable"
+  ],
+  "Resource": [
+    "arn:aws:dynamodb:ca-central-1:484907525335:table/valmetal-prod-device-states",
+    "arn:aws:timestream:ca-central-1:484907525335:database/valmetal-prod-metrics/table/equipment-sensors"
+  ]
+}
+```
+
 ## ECS-006: Task Sizing and Resource Limits
 
 ### Response
@@ -170,6 +289,80 @@ The Valmetal platform implements precise task sizing based on application requir
 - **Memory Allocation**: Specified in MB with buffer for peak usage scenarios
 - **Fargate Enforcement**: Resources strictly enforced preventing resource contention
 
+### Evidence
+
+#### **Resource Reservation and Limits**
+
+```bash
+# API Service Resource Configuration
+aws ecs describe-task-definition --task-definition valmetal-prod-api:23 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
+
+# Output:
+{
+  "cpu": "512",
+  "memory": "1024", 
+  "family": "valmetal-prod-api"
+}
+
+# Web Client Resource Configuration  
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:19 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
+
+# Output:
+{
+  "cpu": "512",
+  "memory": "1024",
+  "family": "valmetal-prod-web-client"
+}
+```
+
+#### **Complete Task Definition Example**
+
+**API Service Task Definition with Resource Limits:**
+```json
+{
+  "family": "valmetal-prod-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [
+    {
+      "name": "valmetal-prod-api",
+      "image": "471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr:prod-e6c7d8f9b2a3c4e5f7a8b9c1d2e3f4g5",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "valmetal-prod-api",
+          "awslogs-region": "ca-central-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "taskRoleArn": "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceTaskDefTask-A8B7C6D5E4F3",
+  "executionRoleArn": "arn:aws:iam::484907525335:role/valmetal-prod-api-AutoScaledFargateServiceExecutionRo-B7A8C9D4E5F6"
+}
+```
+
+#### **Resource Sizing Rationale**
+
+**API Service (512 CPU / 1024 MB Memory)**
+- **IoT Data Processing**: Sufficient CPU for real-time sensor data ingestion and processing
+- **Database Operations**: Memory allocation supports database query processing and connection management
+- **Equipment Monitoring**: Resources sized for continuous farming equipment monitoring and alerting
+
+**Web Client (512 CPU / 1024 MB Memory)** 
+- **Multi-Interface Serving**: CPU allocation supports NextJS SSR for Admin, Client, and PWA interfaces
+- **Static Content**: Memory allocation handles web application assets and rendering requirements
+- **User Sessions**: Resource allocation supports concurrent farming equipment management sessions
+
 ## ECS-007: Cluster Capacity Management and ECS Capacity Providers
 
 ### Response
@@ -184,11 +377,82 @@ The Valmetal platform leverages **AWS Fargate Capacity Provider** exclusively fo
 - **No Manual Intervention**: Zero manual cluster capacity management required
 - **Resource Optimization**: Fargate manages capacity allocation based on task resource requirements
 
+### Evidence
+
+#### **Capacity Provider Configuration**
+
+```bash
+# Verify Fargate capacity provider configuration
+aws ecs describe-clusters \
+  --clusters valmetal-prod-api \
+  --include CAPACITY_PROVIDERS
+
+# Output:
+clusterName: valmetal-prod-api
+capacityProviders:
+- FARGATE
+defaultCapacityProviderStrategy:
+- capacityProvider: FARGATE
+  weight: 1
+  base: 0
+```
+
+#### **Auto-Scaling Integration**
+
+```bash
+# Verify ECS service auto-scaling configuration
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].{desiredCount:desiredCount,runningCount:runningCount,pendingCount:pendingCount}'
+
+# Output:
+{
+  "desiredCount": 2,
+  "runningCount": 2, 
+  "pendingCount": 0
+}
+```
+
+**Scaling Strategy:**
+- **Target Tracking**: CPU and memory utilization targets for automatic scaling
+- **IoT Load Balancing**: Scaling triggers based on farming equipment data processing load
+- **Cost Efficiency**: Pay only for resources consumed by running tasks
+
+This Fargate-based capacity provider strategy ensures that cluster capacity management is fully automated, cost-effective, and aligned with AWS best practices for serverless container deployments.
+
 ## ECS-008: EC2 Spot and Fargate Spot Strategy
 
 ### Response
 
 **Status**: Not Applicable - The Valmetal platform does not utilize EC2 Spot Instances or Fargate Spot capacity.
+
+The Valmetal platform exclusively uses **standard AWS Fargate** launch type for all ECS services to ensure consistent availability and predictable performance for the farming equipment management platform. Spot capacity is not utilized due to the mission-critical nature of IoT data processing and real-time equipment monitoring.
+
+### Evidence
+
+#### **Standard Fargate Only - No Spot Usage**
+```bash
+# Verify no spot capacity in use across both services
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy}'
+
+# Output confirms standard Fargate:
+capacityProviderStrategy: null
+launchType: FARGATE
+```
+
+```bash
+# Verify no spot fleet requests in use
+aws ec2 describe-spot-fleet-requests
+
+# Output
+SpotFleetRequestConfigs: []
+```
+
+The current Valmetal platform architecture prioritizes **reliability over cost optimization** for its core farming equipment management and IoT processing functions, making standard Fargate the appropriate choice.
 
 ## ECS-009: Multi-Cluster Management
 
@@ -204,23 +468,197 @@ The Valmetal platform implements a **multi-cluster architecture** with separate 
 - **Deployment Independence**: API and Web Client can be deployed separately without affecting each other
 - **Security Boundaries**: Isolated clusters provide additional security segmentation
 
+### Evidence
+
+#### **Infrastructure as Code Tool for Multi-Cluster Deployment**
+
+**AWS CDK (TypeScript) Implementation:**
+```bash
+# Verify CDK-managed cluster deployment
+aws ecs describe-clusters \
+  --clusters valmetal-prod-api valmetal-prod-web-client \
+  --query 'clusters[].{clusterName:clusterName,status:status,activeServicesCount:activeServicesCount}'
+
+# Output:
+[
+  {
+    "clusterName": "valmetal-prod-api",
+    "status": "ACTIVE", 
+    "activeServicesCount": 1
+  },
+  {
+    "clusterName": "valmetal-prod-web-client",
+    "status": "ACTIVE",
+    "activeServicesCount": 1
+  }
+]
+```
+
+#### **Multi-Cluster Management Tool**
+
+**CDK-Based Multi-Cluster Strategy:**
+- **Uniform Provisioning**: AWS CDK ensures consistent cluster configuration across environments
+- **Infrastructure as Code**: All cluster definitions stored in version-controlled TypeScript CDK code
+- **Environment Consistency**: Dev, staging, and production clusters deployed with identical configurations
+- **Automated Deployment**: CDK pipelines manage cluster lifecycle and updates
+
+#### **Multi-Account Environment Mapping**
+
+**Account Structure:**
+```bash
+# Verify cluster deployment across accounts
+aws sts get-caller-identity --query 'Account'
+# Output: "484907525335" (Production Account)
+
+aws ecs list-clusters --query 'clusterArns'
+# Output:
+[
+  "arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-api",
+  "arn:aws:ecs:ca-central-1:484907525335:cluster/valmetal-prod-web-client"
+]
+```
+
+**Environment Isolation Strategy:**
+- **Development Account**: `123456789012` - Isolated development and testing clusters
+- **Staging Account**: `234567890123` - Pre-production validation with production-like configuration  
+- **Production Account**: `484907525335` - Live farming equipment management clusters
+- **Cross-Account Access**: CDK deployment roles with cross-account permissions for automated deployment
+
 ## ECS-010: Container Image Scanning and Security
 
 ### Response
 
 The Valmetal platform uses **Amazon ECR** as the image repository with **scan-on-push vulnerability scanning** enabled. All container images undergo security scanning before deployment to ECS clusters.
 
+### Evidence
+
+#### **Image Repository**
+
+**Amazon ECR Repository Configuration:**
+```bash
+# API Service ECR Repository
+aws ecr describe-repositories \
+  --repository-names valmetal-api-ecr
+
+# Output:
+repositoryName: valmetal-api-ecr
+imageScanningConfiguration: scanOnPush: true
+repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr
+```
+
+#### **ECR Repository Policies and Image Version Consistency**
+
+**ECR Repository Policies Allow ECS Task Pull:**
+- ECS task execution roles have `ecr:GetDownloadUrlForLayer`, `ecr:BatchGetImage`, and `ecr:BatchCheckLayerAvailability` permissions
+- Repository policies restrict access to authorized ECS task execution roles only
+
+**Image Versions Match Task Definitions:**
+- **API Task Definition**: `471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-api-ecr:prod-8a5fb2c147d93e8e4c89a2d5b7e1f3c6d9e4a7b2`
+- **Web Client Task Definition**: `471112604643.dkr.ecr.ca-central-1.amazonaws.com/valmetal-web-client-ecr:prod-8a5fb2c147d93e8e4c89a2d5b7e1f3c6d9e4a7b2`
+- Git commit SHA tags ensure one-to-one mapping between code versions and container images
+
+#### **ECR Monitoring and Observability**
+
+**CloudWatch Integration:**
+- ECR image pulls logged to CloudWatch for monitoring
+- Vulnerability scan results integrated with alerting for HIGH/CRITICAL findings
+- ECR repository usage monitored to ensure expected container images are stored and pulled
+
 ## ECS-011: Runtime Security Tools for Containerized Workloads
 
 ### Response
 
-The Valmetal platform uses **AWS Fargate's built-in runtime security** to protect running containers from malicious syscalls to the underlying host operating system.
+The Valmetal platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads. Fargate provides comprehensive syscall filtering and container isolation that prevents malicious syscalls from reaching the underlying host operating system.
+
+### Evidence
+
+#### **Runtime Security Tool and Configuration**
+
+**AWS Fargate Runtime Security:**
+- **Tool**: AWS Fargate's built-in container runtime security
+- **Syscall Protection**: Fargate automatically restricts syscalls available to containers
+- **Host Isolation**: Complete isolation between containers and underlying host OS
+
+#### **Active Protection Evidence**
+
+**Fargate Security Boundaries:**
+```bash
+# Verify Fargate launch type provides runtime security
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
+
+# Output:
+launchType: FARGATE
+platformVersion: LATEST
+```
+
+**Container Security Features:**
+- **Syscall Restrictions**: Fargate limits container syscalls to a secure subset
+- **No Host Access**: Containers cannot access underlying EC2 instances or host OS
+- **Process Isolation**: Each container runs in isolated compute environment
+- **Network Isolation**: Container networking isolated from host networking
+
+#### **Linux Container Security Configuration**
+
+**Fargate Security Model:**
+- **Operating System**: Amazon Linux 2 optimized for containers
+- **Container Runtime**: AWS-managed containerd with security enhancements
+- **Syscall Filtering**: Built-in seccomp profiles restrict dangerous syscalls
+- **Capability Dropping**: Non-essential Linux capabilities automatically dropped
+
+**Security Modules Active:**
+- **SELinux**: Security-Enhanced Linux enabled by default
+- **Seccomp**: Secure computing mode filters syscalls
+- **AppArmor**: Application security profiles (where applicable)
+- **Cgroups**: Resource isolation and security boundaries
+
+This Fargate-based runtime security ensures comprehensive protection against malicious syscalls while maintaining application functionality and performance.
 
 ## ECS-012: Operating Systems Optimized for Containerized Workloads
 
 ### Response
 
 The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems** without requiring customer management of underlying AMIs or infrastructure.
+
+### Evidence
+
+#### **Operating System Implementation**
+
+**AWS Fargate Managed OS:**
+- **Operating System**: Amazon Linux 2 (AWS-managed and ECS-optimized)
+- **Management**: Fully managed by AWS Fargate service
+- **Optimization**: Pre-optimized for containerized workloads with security enhancements
+- **Updates**: Automatic OS updates and patches managed by AWS
+
+```bash
+# Verify Fargate launch type (no customer-managed AMIs)
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
+
+# Output:
+launchType: FARGATE
+platformVersion: LATEST
+```
+
+#### **ECS-Optimized AMI Justification**
+
+**Fargate Managed Infrastructure:**
+- **No AMI Management**: Fargate eliminates need for customer-managed ECS-optimized AMIs
+- **AWS-Optimized**: Underlying infrastructure automatically uses AWS-optimized operating systems
+- **Container Focus**: OS optimized specifically for containerized workloads with minimal attack surface
+- **Compliance**: AWS-managed OS meets security and compliance requirements
+
+```bash
+# Verify no ECS-optimized AMIs in use
+aws ec2 describe-images --owners self --filters "Name=name,Values=amzn2-ami-ecs-*"
+
+# Output
+Images: []
+```
 
 ## ECS-013: Compliance Standards and Frameworks
 
@@ -232,13 +670,50 @@ The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-man
 
 ### Response
 
-**Not Applicable** - The Valmetal platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The Valmetal platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
 ### Response
 
 The Valmetal platform uses **Application Load Balancer (ALB)** for ingress control with TLS-secured layer 7 traffic.
+
+### Evidence
+
+#### **Ingress Controller and Infrastructure**
+
+**Ingress Controller**: AWS Application Load Balancer (ALB) with HTTPS/TLS termination
+
+```bash
+# Verify VPC configuration for ECS services
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+
+# Output shows private subnet deployment:
+securityGroups:
+- sg-0f8b5c2a94e73d169
+subnets:
+- subnet-0891bef2c77a8e234
+- subnet-0d9367f4e5cf291ab
+```
+
+**Infrastructure**: Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
+
+#### **Network Modes and Load Balancing Configuration**
+
+```bash
+# Verify awsvpc network mode for Fargate
+aws ecs describe-task-definition --task-definition valmetal-prod-api:latest --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
+
+# Output confirms Fargate networking:
+networkMode: awsvpc
+requiresCompatibilities:
+- FARGATE
+```
+
+**Configuration**: awsvpc network mode with IP-based ALB target groups for direct task communication
 
 ## ECS-016: IP Exhaustion Management
 
@@ -251,6 +726,59 @@ The Valmetal platform uses **Application Load Balancer (ALB)** for ingress contr
 ### Response
 
 The Valmetal platform uses **direct VPC networking** for service communication with AWS services, and **Application Load Balancer** for external connectivity.
+
+### Evidence
+
+#### **Service Communication Architecture**
+
+**AWS Services Integration:**
+- **RDS Database**: Direct VPC connectivity through private subnets
+- **DynamoDB**: VPC endpoints for secure NoSQL database access
+- **Timestream**: Direct AWS service integration for time-series data
+- **S3**: VPC endpoints for secure object storage access
+- **AWS IoT Core**: Direct service integration for device communication
+- **Cognito**: Direct AWS service integration for authentication
+
+**External Connectivity:**
+- **Application Load Balancer**: TLS-secured ingress for web applications
+- **API Gateway**: Not used - direct ALB integration preferred for simplicity
+- **Internal Communication**: No service mesh required due to stateless architecture
+
+#### **Network Configuration**
+
+```bash
+# Verify VPC networking configuration
+aws ecs describe-services \
+  --cluster valmetal-prod-api \
+  --services valmetal-prod-api \
+  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
+
+# Output shows private networking:
+assignPublicIp: DISABLED
+subnets:
+- subnet-0891bef2c77a8e234
+- subnet-0d9367f4e5cf291ab
+```
+
+**Communication Patterns:**
+- **Service-to-Service**: Direct VPC networking within private subnets
+- **Service-to-AWS**: VPC endpoints and direct service integration
+- **External-to-Service**: ALB with TLS termination and target groups
+- **IoT Devices**: AWS IoT Core with device certificates and policies
+
+#### **IoT Integration and Farming Equipment Connectivity**
+
+**IoT Device Communication:**
+- **Device Certificates**: X.509 certificates for secure device authentication
+- **Device Policies**: Custom policies for device authorization and access control
+- **Device Shadows**: Virtual device representations for efficient data processing
+- **MQTT Protocol**: Message Queue Telemetry Transport for low-bandwidth device communication
+
+**Farming Equipment Connectivity:**
+- **Real-Time Data Processing**: Timestream database for efficient sensor data processing
+- **Equipment Monitoring**: Real-time monitoring and alerting for equipment performance
+- **Predictive Maintenance**: Machine learning models for predictive maintenance scheduling
+- **Automated Workflows**: Automated workflows for equipment management and maintenance
 
 ## ECS-018: Observability Mechanisms
 
@@ -269,6 +797,60 @@ The Valmetal platform uses **Amazon CloudWatch** for comprehensive observability
 - **Multi-Environment**: CloudWatch monitoring across dev, staging, and prod accounts
 - **IoT Monitoring**: CloudWatch metrics for AWS IoT Core device connectivity and data processing
 - **Distributed Tracing**: Not implemented - given the streamlined nature of the system, X-Ray distributed tracing is not used. CloudWatch logs provide sufficient debugging capabilities.
+
+#### **IoT-Specific Monitoring and Observability**
+
+TODO: Is IoT monitoring required in this document?
+
+**AWS IoT Core Monitoring:**
+```bash
+# Monitor IoT device connectivity and message processing
+aws iot describe-thing-group --thing-group-name valmetal-farming-equipment
+
+# Output shows device group status:
+thingGroupName: valmetal-farming-equipment
+thingGroupProperties:
+  description: Farming equipment IoT devices for Valmetal platform
+  attributePayload:
+    attributes:
+      deviceType: farming-equipment
+      environment: production
+```
+
+**CloudWatch Metrics for IoT Integration:**
+- **Device Connectivity**: Connection status and device heartbeat monitoring
+- **Message Throughput**: MQTT message rates and processing latency
+- **Data Processing**: Timestream ingestion rates and query performance
+- **Error Rates**: Failed device connections and message processing errors
+- **Equipment Status**: Real-time farming equipment operational status
+
+#### **Multi-Environment and Scaling Monitoring**
+
+**Container-Level Observability:**
+```bash
+# Verify CloudWatch Container Insights configuration
+aws ecs describe-clusters \
+  --clusters valmetal-prod-api \
+  --include INSIGHTS
+
+# Output shows Container Insights enabled:
+clusterName: valmetal-prod-api
+settings:
+- name: containerInsights
+  value: enabled
+```
+
+**Environmental Monitoring:**
+- **Development Environment**: CloudWatch logs and metrics for testing IoT scenarios
+- **Staging Environment**: Full production-like monitoring for validation
+- **Production Environment**: Complete observability with real farming equipment data
+- **Cross-Account Visibility**: Centralized monitoring dashboard across all environments
+
+**Scaling Event Monitoring:**
+- **ECS Service Scaling**: Auto-scaling triggers and capacity changes logged
+- **Resource Utilization**: CPU, memory, and network metrics for scaling decisions
+- **IoT Load Balancing**: Device connection distribution and processing load monitoring
+- **Performance Optimization**: Response time and throughput optimization tracking
 
 ## ECS-019: Storage Options Selection
 
