@@ -796,3 +796,28 @@ Manual infrastructure changes are prohibited via AWS Management Console or AWS C
 - GitHub Actions runners with Github OIDC with minimal permissions
 - CDK CLI for CloudFormation stack deployment and updates
 
+## REL-002: Plan for Disaster Recovery and Recommend Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
+
+Customer did not allocate budget for fully automated disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
+
+### Evidence
+
+**1. Workload Resilience Guidance:**
+
+**RTO & RPO Targets:**
+- **Recommended RTO:** ~8 hours for complete workload recovery in alternate region
+- **Recommended RPO:** ~15 minutes for database recovery using automated backups
+- **Customer Communication:** RTO/RPO targets discussed during architecture review sessions
+
+**Recovery Process for Core Components:**
+- **Database Recovery:** Automated RDS backups with point-in-time recovery enable restoration to any point within the backup retention period
+- **Application Recovery:** Containerized ECS services can be redeployed in any AWS region using existing CDK infrastructure definitions
+- **Data Recovery:** S3 Cross-Region Replication ensures critical application data is automatically replicated to secondary regions
+- **Infrastructure Recovery:** Complete infrastructure can be recreated in alternate regions by modifying CDK deployment parameters (region, VPC CIDR ranges)
+
+**2. ACI-MTL Platform Resilience Implementation:**
+
+**Automated Backup Mechanisms:**
+- **RDS Database:** Automated backups 
+- **S3 Storage:** Versioning enabled with lifecycle policies for data protection and cost optimization
+- **Application Code:** Source code versioned in GitHub with automated CI/CD pipeline enabling rapid redeployment

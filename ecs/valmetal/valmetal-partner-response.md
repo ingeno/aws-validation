@@ -791,3 +791,31 @@ All Valmetal production resources are deployed using automated CI/CD with the fo
 Manual infrastructure changes are prohibited via AWS Management Console or AWS CLI. Production deployments exclusively use:
 - GitHub Actions runners with Github OIDC with minimal permissions
 - CDK CLI for CloudFormation stack deployment and updates
+
+## REL-002: Plan for Disaster Recovery and Recommend Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
+
+Customer did not allocate budget for fully automated disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
+
+### Evidence
+
+**1. Workload Resilience Guidance:**
+
+**RTO & RPO Targets:**
+- **Recommended RTO:** ~8 hours for complete workload recovery in alternate region
+- **Recommended RPO:** ~15 minutes for database recovery using automated backups
+- **Customer Communication:** RTO/RPO targets discussed during architecture review sessions
+
+**Recovery Process for Core Components:**
+- **Database Recovery:** Automated RDS backups with point-in-time recovery enable restoration to any point within the backup retention period
+- **Application Recovery:** Containerized ECS services can be redeployed in any AWS region using existing CDK infrastructure definitions
+- **Data Recovery:** S3 Cross-Region Replication ensures critical application data is automatically replicated to secondary regions
+- **Infrastructure Recovery:** Complete infrastructure can be recreated in alternate regions by modifying CDK deployment parameters (region, VPC CIDR ranges)
+
+**2. Valmetal IoT Platform Resilience Implementation:**
+
+**Automated Backup Mechanisms:**
+- **RDS Database:** Automated daily backups with 35-day retention period and continuous transaction log backups for point-in-time recovery
+- **DynamoDB Tables:** Point-in-time recovery enabled for all IoT data tables providing restore capability for the last 35 days
+- **Application Code:** Source code versioned in GitHub with automated CI/CD pipeline enabling rapid redeployment
+
+
