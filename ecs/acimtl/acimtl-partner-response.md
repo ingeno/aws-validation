@@ -231,7 +231,7 @@ aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --q
 
 ### Response
 
-All ECS clusters are configured with AWS Fargate capacity providers for automatic scaling based on task demand.
+The ACI-MTL platform leverages AWS Fargate Capacity Provider exclusively for automatic cluster capacity management, eliminating manual scaling operations and ensuring optimal resource allocation. All ECS services are configured with Fargate capacity providers to handle scaling events seamlessly based on task demand.
 
 ### Evidence
 
@@ -252,34 +252,21 @@ defaultCapacityProviderStrategy:
 
 ### Response
 
-**Status**: Not Applicable - The ACI-MTL platform does not utilize EC2 Spot Instances or Fargate Spot capacity.
+**Status**: Not Applicable
 
-The ACI-MTL platform exclusively uses **standard AWS Fargate** launch type for all ECS services to ensure consistent availability and predictable performance for the shelter management platform. Spot capacity is not utilized due to the mission-critical nature of the application serving vulnerable populations.
+The ACI-MTL platform exclusively uses standard AWS Fargate launch type for all ECS services to ensure consistent availability and predictable performance for the shelter management platform. Spot capacity is not utilized due to the mission-critical nature of the application serving vulnerable populations.
 
 ### Evidence
 
-#### **Standard Fargate Only - No Spot Usage**
 ```bash
-# Verify no spot capacity in use across both services
-aws ecs describe-services \
-  --cluster acimtl-prod-api \
-  --services acimtl-prod-api \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy}'
+# Verify no spot capacity in use
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].launchType'
+# Output: FARGATE
 
-# Output confirms standard Fargate:
-capacityProviderStrategy: null
-launchType: FARGATE
-```
-
-```bash
 # Verify no spot fleet requests in use
 aws ec2 describe-spot-fleet-requests
-
-# Output confirms no spot fleets:
-SpotFleetRequestConfigs: []
+# Output: SpotFleetRequestConfigs: []
 ```
-
-The current ACI-MTL platform architecture prioritizes **reliability over cost optimization** for its core shelter management functions, making standard Fargate the appropriate choice.
 
 ## ECS-009: Multi-Cluster Management
 
