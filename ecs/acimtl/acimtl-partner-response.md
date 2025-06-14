@@ -276,23 +276,15 @@ The ACI-MTL platform uses **AWS CDK (TypeScript)** for multi-cluster management 
 
 ### Evidence
 
-#### **Infrastructure as Code Tool for Multi-Cluster Deployment**
+**IaC Tool:** AWS CDK (TypeScript) is used to define and deploy all Amazon ECS clusters with consistent configuration across environments. A single set of parameterizable stacks is used for all environments (development, staging, production).
 
-**AWS CDK (TypeScript)** is used to define and deploy all Amazon ECS clusters with consistent configuration. The same stacks with appropriate parameters are used for all environments (development, staging, production).
+**Multi-Cluster Management Tool:** AWS CDK manages multiple ECS clusters with consistent configuration.
 
-#### **Multi-Cluster Management Tool**
-
-**CDK-Based Multi-Cluster Management:** AWS CDK manages multiple ECS clusters with consistent configuration across environments.
-
-#### **Multi-Account Environment Mapping**
-
-**Account Structure:**
-
-- **Development Account**: `339713169203` - Isolated development and testing clusters
-- **Staging Account**: `911167913296` - Pre-production validation with production-like configuration (replica of production)  
+**Multi-Account Environment Mapping:**
+- **Development Account**: `339713169203` - Development and testing clusters
+- **Staging Account**: `911167913296` - Pre-production validation clusters  
 - **Production Account**: `484907525335` - Live ACI-MTL application clusters
-- **Shared Account**: `471112604643` - ECR repositories
-- **Cross-Account Access**: CDK deployment roles is granted to Github CI/CD pipeline based on which environment is being deployed to.
+- **Shared Account**: `471112604643` - ECR repositories (sharing images between environments)
 
 ## ECS-010: Container Image Scanning and Security
 
