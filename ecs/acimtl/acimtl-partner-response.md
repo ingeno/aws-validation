@@ -365,7 +365,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
@@ -536,4 +536,4 @@ The ACI-MTL platform secures access to persistent storage (RDS and S3) through *
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform is designed as a **single-tenant application**. There is only one production deployment that manages multiple shelters.
+**Not Applicable** - The ACI-MTL platform is designed as a **single-tenant application**.

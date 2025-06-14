@@ -520,4 +520,4 @@ The Valmetal platform secures access to persistent storage (RDS, DynamoDB, Times
 
 ### Response
 
-**Not Applicable** - The Valmetal platform is designed as a **single-tenant application**. There is only one production deployment that manages multiple farming equipment. There is application-level logic to allow Farmers use the platform to manage their own equipment.
+**Not Applicable** - The Valmetal platform is designed as a **single-tenant application**.
