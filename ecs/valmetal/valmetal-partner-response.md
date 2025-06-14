@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -556,7 +556,9 @@ Ingeno implements comprehensive secure AWS account governance through documented
 - Root account access restricted to emergency use with maximum 3 designated administrators
 - MFA enabled on all accounts using Google Authenticator with secure 1Password storage
 - Corporate contact information configured with security contact `aws.valmetal.audit@ingeno.ca`
-- CloudTrail enabled across all Control Tower regions with centralized log protection and KMS encryption
+- CloudTrail enabled across all regions providing complete audit trail for all access activities
+- Centralized identity management through AWS IAM Identity Center eliminating local account creation
+- Regular access certification and privilege reviews conducted quarterly with documented remediation
 
 ## ACCT-002: Define Identity Security Best Practice on How to Access Customer Environment by Leveraging IAM
 
@@ -646,3 +648,23 @@ The operational runbook covers:
 - **Troubleshooting Scenarios:** Detailed diagnostic and resolution steps for ECS service failures, database performance issues, DynamoDB throttling, and Timestream ingestion problems
 - **Incident Resolution Workflow:** Classification procedures, escalation paths, and communication templates for IoT platform incidents
 - **Routine Maintenance Procedures:** Security patching and disaster recovery testing protocols for multi-service IoT architecture
+
+## OPE-003: Use Consistent Processes to Assess Deployment Readiness
+
+### Response
+
+Ingeno employs a fully automated CI/CD pipeline that ensures deployment readiness through comprehensive testing and validation processes. Rather than manual checklists, our approach leverages automated testing, peer review, and staged deployment processes to guarantee code quality and system reliability before production deployment across the IoT platform's multi-service architecture.
+
+### Evidence
+
+**Automated CI/CD Pipeline Process:**
+
+Our deployment readiness assessment includes:
+- **Automated Code Quality:** Linting, security scanning, and code quality checks executed on every commit
+- **Comprehensive Testing:** Unit tests, integration tests, and IoT-specific end-to-end testing automatically executed in CI pipeline
+- **Peer Review Process:** All code changes require GitHub pull request approval from senior developers before merge
+- **Staged Deployment:** Code deployed first to testing environment (production replica) for validation across ECS, Lambda, DynamoDB, and Timestream services
+- **Zero-Downtime Production Deployment:** ECS rolling deployments with health checks ensure seamless production updates without IoT data ingestion interruption
+- **Automated Rollback:** Pipeline automatically reverts deployments if health checks or monitoring thresholds indicate issues with any IoT platform component
+
+This automated approach eliminates manual checklist errors while ensuring consistent, reliable deployments across all customer IoT environments.
