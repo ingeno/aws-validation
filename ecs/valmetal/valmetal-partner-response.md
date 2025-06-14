@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -475,27 +475,20 @@ The Valmetal platform uses **external database services** and **object storage**
 
 ### Evidence
 
-#### **Workload and Storage Selection**
+**Workload:** Farming equipment management application with database operations, time-series data processing, document storage, and stateless web application serving.
 
-**Farming Equipment Management Application Workload:**
-- **Database Operations**: Equipment records, maintenance schedules, IoT device states, reporting queries
-- **Time-Series Data**: Real-time equipment sensor data, performance metrics, operational analytics
-- **Document Storage**: Equipment manuals, maintenance reports, configuration files
-- **Web Application**: Stateless application serving and API processing for multiple interfaces
-
-**Storage Solutions:**
-- **Amazon RDS**: PostgreSQL database for relational data and equipment records
-- **Amazon DynamoDB**: NoSQL database for IoT device states and real-time data processing
-- **Amazon Timestream**: Time-series database for sensor data and equipment performance metrics
-- **Amazon S3**: Object storage for file uploads, documents, and data archival
-- **No Container Storage**: Fargate containers remain stateless without persistent volumes
+**Storage Selection:**
+- **Amazon RDS**: PostgreSQL database for relational data
+- **Amazon DynamoDB**: NoSQL database for IoT device states  
+- **Amazon Timestream**: Time-series database for sensor data
+- **Amazon S3**: Object storage for file uploads and documents
 
 **Performance Requirements and Reasoning:**
-- **RDS**: Sub-second query response for equipment records, automated scaling and backup
-- **DynamoDB**: Millisecond latency for IoT device state management, automatic scaling
-- **Timestream**: Optimized for time-series data ingestion and analytics queries
-- **S3**: Standard access latency acceptable for file storage, cost-effective for long-term retention
-- **Stateless Design**: No container-level storage needed, simplifies deployment and scaling
+- **RDS**: Sub-second query response required for equipment records; chosen for automated scaling and backup
+- **DynamoDB**: Millisecond latency required for IoT device state management; chosen for automatic scaling
+- **Timestream**: Optimized time-series data ingestion required; chosen for analytics query performance  
+- **S3**: Standard access latency acceptable for file storage; chosen for cost-effective long-term retention
+- **No Container Storage**: Fargate containers remain stateless to simplify deployment and scaling
 
 ## ECS-020: EFS Mount Targets in Availability Zones
 

@@ -365,7 +365,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
@@ -495,22 +495,16 @@ The ACI-MTL platform uses **external database services** and **object storage** 
 
 ### Evidence
 
-#### **Workload and Storage Selection**
+**Workload:** Shelter management application with database operations, file management, and stateless web application serving.
 
-**Shelter Management Application Workload:**
-- **Database Operations**: Client records, case management, reporting queries
-- **File Management**: Document uploads, reports, administrative files
-- **Web Application**: Stateless application serving and API processing
-
-**Storage Solutions:**
-- **Amazon RDS**: PostgreSQL database for transactional data with automated backups
+**Storage Selection:**
+- **Amazon RDS**: PostgreSQL database for transactional data
 - **Amazon S3**: Object storage for file uploads and document management
-- **No Container Storage**: Fargate containers remain stateless without persistent volumes
 
 **Performance Requirements and Reasoning:**
-- **RDS**: Sub-second query response for database operations, automated scaling and backup
-- **S3**: Standard access latency acceptable for file storage, cost-effective for document retention
-- **Stateless Design**: No container-level storage needed, simplifies deployment and scaling
+- **RDS**: Sub-second query response required for database operations; chosen for automated scaling and backup
+- **S3**: Standard access latency acceptable for file storage; chosen for cost-effective document retention
+- **No Container Storage**: Fargate containers remain stateless to simplify deployment and scaling
 
 ## ECS-020: EFS Mount Targets in Availability Zones
 
