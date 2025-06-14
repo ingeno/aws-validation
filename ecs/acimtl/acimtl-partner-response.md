@@ -546,8 +546,87 @@ The ACI-MTL platform architecture is designed with scalability and high availabi
 
 ### Evidence
 
-**Architecture Diagram:** See `acimtl-diagram.mmd` - Complete cloud architecture showing VPC with public/private subnets, Elastic Load Balancing, AWS Fargate services (API and web server) in private subnets, RDS database, and external AWS services (S3, Cognito, IAM).
+**Architecture Diagram:** See included diagram - Complete cloud architecture showing VPC with public/private subnets, Elastic Load Balancing, AWS Fargate services (API and web server) in private subnets, RDS database, and external AWS services (S3, Cognito, IAM).
 
 **Failure Recovery:** Major solution elements maintain availability through multi-AZ RDS deployment with automated backups, ECS service auto-restart for failed tasks, Elastic Load Balancer health checks with automatic traffic routing, and S3 cross-region replication for document storage.
 
 **Automatic Scaling:** ECS Fargate services scale automatically based on CPU/memory utilization, RDS provides automated storage scaling, and Elastic Load Balancer distributes traffic across multiple availability zones as demand changes.
+
+## ACCT-001: Secure AWS Account Governance Best Practice
+
+### Response
+
+Ingeno implements comprehensive secure AWS account governance through documented procedures that address all four AWS Service Delivery Program requirements: strict root account usage policies, mandatory MFA implementation, corporate contact information management, and comprehensive CloudTrail logging with dedicated log protection.
+
+### Evidence
+
+**1. Security Engagement SOP Documentation:**
+- **Reference Document:** `ingeno-root-account-security-summary.md` - Comprehensive root account security controls covering:
+  - Root account usage policy (emergency access only, maximum 3 designated personnel)
+  - MFA implementation (Google Authenticator with 1Password integration)
+  - Corporate contact information standards (role-based emails, corporate phone numbers)
+  - CloudTrail configuration with multi-region coverage and log protection
+  - **Supporting Documentation:** Ingeno - AWS Landing Zone Provisioning.pdf - Complete SOP with step-by-step implementation procedures
+
+
+**3. Compliance Verification:**
+- Root account access restricted to emergency use with maximum 3 designated administrators
+- MFA enabled on all accounts using Google Authenticator with secure 1Password storage
+- Corporate contact information configured with security contact `aws.acimtl.audit@ingeno.ca`
+- CloudTrail enabled across all Control Tower regions with centralized log protection and KMS encryption
+
+## ACCT-002: Define Identity Security Best Practice on How to Access Customer Environment by Leveraging IAM
+
+### Response
+
+Ingeno implements comprehensive identity security best practices for accessing customer AWS environments through standardized IAM approaches that eliminate permanent credentials, enforce least privilege access, and integrate with enterprise identity systems. Our approach covers both AWS Management Console access and programmatic access using temporary credentials exclusively.
+
+### Evidence
+
+**1. Security Engagement SOP Documentation:**
+- **Reference Document:** `aws-account-access-summary.md` - Comprehensive access management procedures covering:
+  - Standard approach to customer AWS account access (Console via SAML federation, Programmatic via temporary credentials)
+  - Temporary credential usage through IAM roles and AWS STS
+  - Enterprise identity integration with Google Workspace and customer identity providers
+  - IAM best practices implementation (least privilege, wildcard avoidance, individual accountability)
+- **Supporting Documentation:** Ingeno - AWS Landing Zone Provisioning.pdf - Complete SOP with step-by-step implementation procedures
+
+**2. Customer Implementation - Standard Architecture:**
+
+**Console Access Implementation:**
+- SAML federation through Google Workspace with AWS IAM Identity Center integration
+- Custom portal URLs for secure access with 8-hour maximum session duration
+- Mandatory MFA enforcement using Google Authenticator for all users
+- Role-based access to appropriate AWS accounts based on group membership
+
+**Programmatic Access Implementation:**
+- Exclusive use of temporary credentials through AWS CLI assume role profiles
+- No permanent access keys distributed or stored anywhere in the system
+- MFA protection required for all credential generation via AWS STS
+- Integration with corporate identity provider for seamless authentication
+
+**Temporary Credential Usage:**
+- Root account access limited to emergency use only with MFA protection
+- All normal operations conducted through federated access via IAM roles
+- CI/CD pipelines use GitHub OIDC integration with minimal permission roles
+- Just-in-time access provisioning with no standing privileges maintained
+
+**Enterprise Identity Integration:**
+- Flexible support for customer SAML/OIDC identity providers
+- Customer maintains control over user lifecycle and permission management
+- Established trust relationships between customer identity providers and AWS
+- Hybrid integration capabilities with customer Active Directory systems
+
+**3. IAM Best Practices Implementation:**
+- **Least Privilege Principle:** Role-based access with environment-specific restrictions across Development, Staging, and Production scopes
+- **Wildcard Avoidance:** Specific denial policies prevent broad permission grants and enforce granular access controls
+- **Individual Accountability:** Every team member uses dedicated credentials through Google Workspace integration with unique @ingeno.ca accounts
+- **Service Control Policies:** Organizational controls prevent local IAM user creation and enforce centralized identity management
+- **Access Architecture:** Standardized permission set mapping across organizational units with quarterly access reviews
+
+**4. Compliance Controls:**
+- No permanent access keys distributed or stored across any customer environments
+- Universal MFA enforcement with Google Authenticator integration and no bypass capabilities
+- CloudTrail logging across all regions providing complete audit trail for all access activities
+- Centralized identity management through AWS IAM Identity Center eliminating local account creation
+- Regular access certification and privilege reviews conducted quarterly with documented remediation
