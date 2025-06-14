@@ -521,3 +521,17 @@ The Valmetal platform secures access to persistent storage (RDS, DynamoDB, Times
 ### Response
 
 **Not Applicable** - The Valmetal platform is designed as a **single-tenant application**.
+
+## DOC-001: Architecture Diagram with Scalability and High Availability
+
+### Response
+
+The Valmetal platform architecture is designed with scalability and high availability using AWS Fargate, Application Load Balancer, and multi-AZ deployment across multiple AWS services.
+
+### Evidence
+
+**Architecture Diagram:** See included diagram - Complete farm-to-cloud architecture showing edge computing (PLC with Node-RED, Agent), IoT data ingestion (IoT Core, Device Shadow), processing pipeline (ECS Fargate, Lambda, Step Functions), and storage services (RDS multi-AZ, DynamoDB, Timestream, S3).
+
+**Failure Recovery:** Major solution elements maintain availability through multi-AZ RDS deployment with automated backups, ECS service auto-restart for failed tasks, IoT Core device shadow for edge resilience, and S3 cross-region replication for critical data.
+
+**Automatic Scaling:** ECS Fargate services scale automatically based on CPU/memory utilization, DynamoDB scales on-demand for IoT device states, Timestream provides automatic scaling for sensor data, and Application Load Balancer distributes traffic across multiple availability zones as demand changes.

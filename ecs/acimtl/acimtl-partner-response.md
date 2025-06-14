@@ -537,3 +537,17 @@ The ACI-MTL platform secures access to persistent storage (RDS and S3) through *
 ### Response
 
 **Not Applicable** - The ACI-MTL platform is designed as a **single-tenant application**.
+
+## DOC-001: Architecture Diagram with Scalability and High Availability
+
+### Response
+
+The ACI-MTL platform architecture is designed with scalability and high availability using AWS Fargate, Application Load Balancer, and multi-AZ deployment across multiple AWS services.
+
+### Evidence
+
+**Architecture Diagram:** See `acimtl-diagram.mmd` - Complete cloud architecture showing VPC with public/private subnets, Elastic Load Balancing, AWS Fargate services (API and web server) in private subnets, RDS database, and external AWS services (S3, Cognito, IAM).
+
+**Failure Recovery:** Major solution elements maintain availability through multi-AZ RDS deployment with automated backups, ECS service auto-restart for failed tasks, Elastic Load Balancer health checks with automatic traffic routing, and S3 cross-region replication for document storage.
+
+**Automatic Scaling:** ECS Fargate services scale automatically based on CPU/memory utilization, RDS provides automated storage scaling, and Elastic Load Balancer distributes traffic across multiple availability zones as demand changes.
