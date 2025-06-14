@@ -294,20 +294,25 @@ The ACI-MTL platform uses **Amazon ECR** as the image repository with **scan-on-
 
 ### Evidence
 
-#### **Image Repository**
-
-**Amazon ECR Repository Configuration:**
 ```bash
-# API Service ECR Repository
-aws ecr describe-repositories \
-  --repository-names acimtl-api-ecr
-
+# ECR repository with scan-on-push configuration
+aws ecr describe-repositories --repository-names acimtl-api-ecr --query 'repositories[0].{repositoryName:repositoryName,scanOnPush:imageScanningConfiguration.scanOnPush}'
 # Output:
-...
-repositoryName: acimtl-api-ecr
-imageScanningConfiguration: scanOnPush: true
-repositoryUri: 471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr
+{
+  "repositoryName": "acimtl-api-ecr",
+  "scanOnPush": true
+}
+
+# Image versions match task definitions
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.containerDefinitions[0].image'
+# Output: 
+"471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
 ```
+
+**ECR Repository Policies:** ECS task execution roles have ECR pull permissions and repository policies restrict access to authorized roles.
+
+**ECR Monitoring:** CloudWatch monitors ECR repository usage and vulnerability scan results with alerting for HIGH/CRITICAL findings.
+
 ## ECS-011: Runtime Security Tools for Containerized Workloads
 
 ### Response

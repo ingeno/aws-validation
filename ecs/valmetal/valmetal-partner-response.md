@@ -262,53 +262,24 @@ The Valmetal platform uses **Amazon ECR** as the image repository with **scan-on
 
 ### Evidence
 
-#### **Image Repository**
-
-**Amazon ECR Repository Configuration:**
 ```bash
-# Verify ECR repository with scan-on-push configuration
-aws ecr describe-repositories --repository-names valmetal-api-ecr --query 'repositories[0].{repositoryName:repositoryName,scanOnPush:imageScanningConfiguration.scanOnPush,tagMutability:imageTagMutability}'
-
+# ECR repository with scan-on-push configuration
+aws ecr describe-repositories --repository-names valmetal-api-ecr --query 'repositories[0].{repositoryName:repositoryName,scanOnPush:imageScanningConfiguration.scanOnPush}'
 # Output:
 {
   "repositoryName": "valmetal-api-ecr",
-  "scanOnPush": true,
-  "tagMutability": "IMMUTABLE"
+  "scanOnPush": true
 }
-```
 
-#### **ECR Repository Policies and Image Version Consistency**
-
-**ECR Repository Policies Allow ECS Task Pull:**
-- ECS task execution roles have `ecr:GetDownloadUrlForLayer`, `ecr:BatchGetImage`, and `ecr:BatchCheckLayerAvailability` permissions
-- Repository policies restrict access to authorized ECS task execution roles only
-
-**Image Versions Match Task Definitions:**
-- **API Task Definition**: `497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc`
-- **Web Client Task Definition**: `497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc`
-- Git commit SHA tags ensure one-to-one mapping between code versions and container images
-
-#### **ECR Monitoring and Observability**
-
-**CloudWatch Integration:**
-- ECR image pulls logged to CloudWatch for monitoring
-- Vulnerability scan results integrated with alerting for HIGH/CRITICAL findings
-- ECR repository usage monitored to ensure expected container images are stored and pulled
-
-#### **Image Version Consistency Verification**
-```bash
-# Verify current task definition uses specific versioned image (not :latest)
+# Image versions match task definitions
 aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.containerDefinitions[0].image'
-
 # Output: 
 "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
-
-# Verify web client image consistency  
-aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.containerDefinitions[0].image'
-
-# Output:
-"497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
 ```
+
+**ECR Repository Policies:** ECS task execution roles have ECR pull permissions and repository policies restrict access to authorized roles.
+
+**ECR Monitoring:** CloudWatch monitors ECR repository usage and vulnerability scan results with alerting for HIGH/CRITICAL findings.
 
 ## ECS-011: Runtime Security Tools for Containerized Workloads
 
