@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -285,10 +285,22 @@ aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 
 
 ### Response
 
-The Valmetal platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads.
+The Valmetal platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads. Fargate provides comprehensive syscall filtering and container isolation that prevents malicious syscalls from reaching the underlying host operating system.
 
 ### Evidence
 
+#### **Runtime Security Tool and Configuration**
+
+**AWS Fargate Runtime Security:**
+- **Tool**: AWS Fargate's built-in container runtime security
+- **Syscall Protection**: Fargate automatically restricts syscalls available to containers
+- **Host Isolation**: Complete isolation between containers and underlying host OS
+
+#### **Active Protection Evidence**
+
+TODO : is platformVersion 1.4.0 enough ? Why not LATEST?
+
+**Fargate Security Boundaries:**
 ```bash
 # Verify Fargate launch type provides runtime security
 aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
@@ -305,45 +317,23 @@ aws ecs describe-services --cluster valmetal-prod-backend-api --services valmeta
 
 ### Response
 
-The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems** without requiring customer management of underlying AMIs or infrastructure.
+The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems**.
 
 ### Evidence
 
-#### **Operating System Implementation**
-
-**AWS Fargate Managed OS:**
-- **Operating System**: Amazon Linux 2 (AWS-managed and ECS-optimized)
-- **Management**: Fully managed by AWS Fargate service
-- **Optimization**: Pre-optimized for containerized workloads with security enhancements
-- **Updates**: Automatic OS updates and patches managed by AWS
-
 ```bash
-# Verify Fargate launch type (no customer-managed AMIs)
-aws ecs describe-services \
-  --cluster valmetal-prod-backend-api \
-  --services valmetal-prod-backend-api \
-  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
-
+# Verify Fargate launch type
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
 # Output:
-launchType: FARGATE
-platformVersion: 1.4.0
+{
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0"
+}
 ```
 
-#### **ECS-Optimized AMI Justification**
+**Operating System:** Amazon Linux 2 (AWS-managed and ECS-optimized via Fargate)
 
-**Fargate Managed Infrastructure:**
-- **No AMI Management**: Fargate eliminates need for customer-managed ECS-optimized AMIs
-- **AWS-Optimized**: Underlying infrastructure automatically uses AWS-optimized operating systems
-- **Container Focus**: OS optimized specifically for containerized workloads with minimal attack surface
-- **Compliance**: AWS-managed OS meets security and compliance requirements
-
-```bash
-# Verify no ECS-optimized AMIs in use
-aws ec2 describe-images --owners self --filters "Name=name,Values=amzn2-ami-ecs-*"
-
-# Output
-Images: []
-```
+**ECS-Optimized AMI Justification:** Fargate eliminates the need for customer-managed ECS-optimized AMIs as the underlying infrastructure is automatically managed by AWS.
 
 ## ECS-013: Compliance Standards and Frameworks
 
