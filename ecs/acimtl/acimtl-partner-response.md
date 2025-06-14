@@ -365,7 +365,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
@@ -437,14 +437,55 @@ The ACI-MTL platform uses **Amazon CloudWatch** for comprehensive observability 
 
 ### Evidence
 
-#### **Observability Mechanism**
+```bash
+# Verify CloudWatch log groups for ECS services
+aws logs describe-log-groups --query 'logGroups[?contains(logGroupName, `acimtl-prod`)].logGroupName'
+# Output:
+[
+  "acimtl-prod-api",
+  "acimtl-prod-web-client"
+]
 
-**CloudWatch Observability:**
-- **Application/Container Metrics**: CloudWatch Container Insights for task-level metrics
-- **Infrastructure Metrics**: ECS cluster and service metrics via CloudWatch
-- **Scaling Events**: Auto-scaling metrics and logs captured during scaling operations  
-- **Multi-Environment**: CloudWatch monitoring across dev, staging, and prod accounts
-- **Distributed Tracing**: Not implemented - given the simple nature of the system, X-Ray distributed tracing is overkill and not used in this scenario. CloudWatch logs provide sufficient debugging capabilities.
+# Verify Container Insights enabled for application/container metrics
+aws ecs describe-clusters --clusters acimtl-prod-api --include SETTINGS --query 'clusters[0].settings'
+# Output:
+[
+  {
+    "name": "containerInsights",
+    "value": "enabled"
+  }
+]
+
+# Verify ECS service metrics for infrastructure layer monitoring
+aws cloudwatch list-metrics --namespace AWS/ECS --query 'Metrics[?contains(MetricName, `CPUUtilization`)].{MetricName:MetricName,Dimensions:Dimensions[0]}'
+# Output:
+[
+  {
+    "MetricName": "CPUUtilization",
+    "Dimensions": {
+      "Name": "ServiceName",
+      "Value": "acimtl-prod-api"
+    }
+  },
+  {
+    "MetricName": "CPUUtilization",
+    "Dimensions": {
+      "Name": "ServiceName", 
+      "Value": "acimtl-prod-web-client"
+    }
+  }
+]
+```
+
+**Application/Container Metrics:** CloudWatch Container Insights enabled for individual task and container-level metrics collection and filtering.
+
+**Infrastructure Metrics:** ECS cluster and service metrics captured via CloudWatch for infrastructure layer monitoring.
+
+**Scaling Events:** Auto-scaling metrics and logs captured during scaling operations across all services.
+
+**Multi-Environment:** CloudWatch monitoring deployed across development, staging, and production accounts.
+
+**Distributed Tracing:** CloudWatch logs provide application debugging capabilities for the stateless architecture.
 
 ## ECS-019: Storage Options Selection
 

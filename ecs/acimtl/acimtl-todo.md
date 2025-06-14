@@ -141,6 +141,35 @@ Once these two changes are implemented:
 - **Tag propagation**: Tasks and associated resources will receive proper tags
 - **Managed tags**: ECS-managed tags will be enabled for AWS resource tracking
 
+## ECS-018: Container Insights Implementation
+
+### Required Changes (Observability Enhancement)
+
+#### 1. ECS Cluster Container Insights Configuration
+
+**Location**: AWS CDK TypeScript code for ECS cluster definitions
+
+**Add Container Insights to existing clusters:**
+```typescript
+// For API cluster
+const apiCluster = new ecs.Cluster(this, 'ApiCluster', {
+  // ... existing configuration
+  containerInsights: true
+});
+
+// For any other ECS clusters
+const otherCluster = new ecs.Cluster(this, 'OtherCluster', {
+  // ... existing configuration
+  containerInsights: true
+});
+```
+
+**Implementation Notes:**
+- Container Insights has been manually enabled via CLI for immediate compliance
+- Adding this to CDK ensures future deployments maintain Container Insights configuration
+- Provides individual app/container level metrics required for ECS-018 compliance
+- Enables detailed CloudWatch metrics and logs for task-level observability
+
 ### Summary
 
 This is a lightweight addition to your existing, well-implemented version tracking system. You already have the hard part (Git SHA traceability) working perfectly - you just need to expose it through formal AWS tags and enable propagation for full compliance.

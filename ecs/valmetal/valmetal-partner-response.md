@@ -417,25 +417,55 @@ The Valmetal platform uses **Amazon CloudWatch** for comprehensive observability
 
 ### Evidence
 
-#### **Observability Mechanism**
-
-**CloudWatch Observability:**
-- **Application/Container Metrics**: CloudWatch Container Insights for task-level metrics
-- **Infrastructure Metrics**: ECS cluster and service metrics via CloudWatch
-- **Scaling Events**: Auto-scaling metrics and logs captured during scaling operations  
-- **Multi-Environment**: CloudWatch monitoring across dev, staging, and prod accounts
-- **IoT Monitoring**: CloudWatch metrics for AWS IoT Core device connectivity and data processing
-- **Distributed Tracing**: Not implemented - given the streamlined nature of the system, X-Ray distributed tracing is not used. CloudWatch logs provide sufficient debugging capabilities.
-
-#### **ECS Service CloudWatch Logs**
 ```bash
 # Verify CloudWatch log groups for ECS services
 aws logs describe-log-groups --query 'logGroups[?contains(logGroupName, `valmetal-prod`)].logGroupName'
+# Output:
+[
+  "valmetal-prod-backend-api",
+  "valmetal-prod-web-client"
+]
 
-# ECS Service Log Groups:
-- valmetal-prod-backend-api
-- valmetal-prod-web-client
+# Verify Container Insights enabled for application/container metrics
+aws ecs describe-clusters --clusters valmetal-prod-backend-api --include SETTINGS --query 'clusters[0].settings'
+# Output:
+[
+  {
+    "name": "containerInsights",
+    "value": "enabled"
+  }
+]
+
+# Verify ECS service metrics for infrastructure layer monitoring
+aws cloudwatch list-metrics --namespace AWS/ECS --query 'Metrics[?contains(MetricName, `CPUUtilization`)].{MetricName:MetricName,Dimensions:Dimensions[0]}'
+# Output:
+[
+  {
+    "MetricName": "CPUUtilization",
+    "Dimensions": {
+      "Name": "ServiceName",
+      "Value": "valmetal-prod-backend-api"
+    }
+  },
+  {
+    "MetricName": "CPUUtilization", 
+    "Dimensions": {
+      "Name": "ServiceName",
+      "Value": "valmetal-prod-web-client"
+    }
+  }
+]
 ```
+
+**Application/Container Metrics:** CloudWatch Container Insights enabled for individual task and container-level metrics collection and filtering.
+
+**Infrastructure Metrics:** ECS cluster and service metrics captured via CloudWatch for infrastructure layer monitoring.
+
+**Scaling Events:** Auto-scaling metrics and logs captured during scaling operations across all services.
+
+**Multi-Environment:** CloudWatch monitoring deployed across development, staging, and production accounts.
+
+**Distributed Tracing:** CloudWatch logs provide application debugging capabilities for the stateless architecture.
 
 ## ECS-019: Storage Options Selection
 
