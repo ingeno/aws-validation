@@ -556,9 +556,7 @@ Ingeno implements comprehensive secure AWS account governance through documented
 - Root account access restricted to emergency use with maximum 3 designated administrators
 - MFA enabled on all accounts using Google Authenticator with secure 1Password storage
 - Corporate contact information configured with security contact `aws.valmetal.audit@ingeno.ca`
-- CloudTrail enabled across all regions providing complete audit trail for all access activities
-- Centralized identity management through AWS IAM Identity Center eliminating local account creation
-- Regular access certification and privilege reviews conducted quarterly with documented remediation
+- CloudTrail enabled across all Control Tower regions with centralized log protection and KMS encryption
 
 ## ACCT-002: Define Identity Security Best Practice on How to Access Customer Environment by Leveraging IAM
 
@@ -653,7 +651,7 @@ The operational runbook covers:
 
 ### Response
 
-Ingeno employs a fully automated CI/CD pipeline that ensures deployment readiness through comprehensive testing and validation processes. Rather than manual checklists, our approach leverages automated testing, peer review, and staged deployment processes to guarantee code quality and system reliability before production deployment across the IoT platform's multi-service architecture.
+Ingeno employs a fully automated CI/CD pipeline that ensures deployment readiness through comprehensive testing and validation processes. Rather than manual checklists, our approach leverages an automated checklist with automated testing, peer review, and staged deployment processes to guarantee code quality and system reliability before production deployment across the IoT platform's multi-service architecture.
 
 ### Evidence
 
@@ -668,3 +666,45 @@ Our deployment readiness assessment includes:
 - **Automated Rollback:** Pipeline automatically reverts deployments if health checks or monitoring thresholds indicate issues with any IoT platform component
 
 This automated approach eliminates manual checklist errors while ensuring consistent, reliable deployments across all customer IoT environments.
+
+## NETSEC-001: Define Security Best Practices for Virtual Private Cloud and Network Security
+
+### Response
+
+Ingeno implements comprehensive VPC network security using standardized AWS CDK infrastructure that enforces defense-in-depth architecture with multi-tier network segmentation, granular security group controls, and AWS native security services integration.
+
+### Evidence
+
+Ingeno has developed reusable CDK constructs to implement network security best practices in a reliable and repeatable way. 
+
+### VPC Construct
+
+A two-tier VPC construct implements a two-tier architecture with the following key features:
+
+- Network Configuration:
+  - Creates public subnets for internet-facing resources
+  - Creates private subnets with egress (for resources that need outbound internet but no inbound)
+  - Spans exactly multiple availability zones for high availability
+  - NAT Gateway Strategy:
+    - Production mode (prod: true): Creates one NAT gateway per AZ (2 total) for high availability
+    - Non-production mode: Creates only 1 NAT gateway to save costs
+  - VPC Flow Logs:
+    - Automatically configures VPC flow logs to capture rejected traffic
+    - Creates a dedicated CloudWatch log group with infinite retention
+    - Sets up proper IAM roles and policies for flow log delivery
+  - Network ACLs: Using default NACL configuration (allows all traffic) - security controls implemented primarily through security group rules
+
+This construct is designed to provide a cost-effective, secure, and highly available network foundation that can be easily reused across different AWS stacks and environments.
+
+### Security Groups Constructs
+
+Security groups are used to control traffic flow between subnets and to the internet and between relevant AWS resources. We have reusable constructs to implement security groups for the interoperability between ECS services and database resources:
+
+- Database is deployed in private subnets
+- ECS services are deployed in private subnets
+- ECS services can access database using security group rules
+- Database can not be accessed from the internet
+- ECS services can access the internet using NAT gateway
+- A bastion host is deployed in public subnets to access private subnets 
+  - Developers can connect to the bastion host using session manager to access private subnets
+  - SSH tunneling is used between the bastion and database to troubleshoot database issues or to perform database maintenance
