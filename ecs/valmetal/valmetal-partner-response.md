@@ -48,7 +48,7 @@ taskArns:
 - Amazon ECR for container image storage and versioning
 
 **Deployment Process:** 
-Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Developer commits in main branch trigger GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
+Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Merged code in main branch triggers GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
 
 **Rollback Procedures:** 
 Automatic rollback triggered by health check failures and CloudWatch alarms during deployment. Previous task definition versions remain available for rollback procedures.
@@ -66,41 +66,24 @@ GitHub Actions workflows integrate with AWS services to automate ECS task defini
 
 ### Response
 
-Each task definition family in the Valmetal architecture serves a distinct, singular business purpose without mixing application logic. This separation ensures clear boundaries between services and facilitates independent scaling, deployment, and management.
+**Task Definitions and Business Functions:**
 
-### Task Definition Families and Their Singular Business Functions
+1. **`valmetal-prod-backend-api`** - Backend API Services
+   - Core API services and business logic layer for equipment management operations and IoT data processing
 
-#### 1. `valmetal-prod-backend-api` - Backend API Services
-**Business Purpose**: Core API services and business logic layer
-- **Specific Function**: RESTful API endpoints for equipment management operations and IoT data processing
-- **Business Logic**: User authentication, data validation, business rules enforcement, IoT data pipeline orchestration
-- **External Integrations**: AWS Cognito (user management), S3 (file operations), RDS (equipment records), DynamoDB (IoT device states), Timestream (sensor data), AWS IoT Core (equipment monitoring)
-- **No Mixed Logic**: Contains only backend API functionality - no frontend rendering or web serving capabilities
-
-#### 2. `valmetal-prod-web-client` - Frontend Web Application
-**Business Purpose**: User interface and web application serving
-- **Specific Function**: Server-side rendered web applications using NextJS
-- **Business Logic**: UI rendering, client-side interactions, frontend routing for multiple interfaces
-- **User Interface**: Complete web interfaces for Admin, Client, and PWA applications for equipment management platform
-- **No Mixed Logic**: Contains only frontend presentation logic - no direct database access or business rule processing
+2. **`valmetal-prod-web-client`** - Frontend Web Application  
+   - User interface and web application serving for Admin, Client, and PWA applications
 
 ### Evidence
 
-#### **Task Definition Families and Business Functions**
-
 ```bash
 # List task definition families
-aws ecs list-task-definitions --family-prefix valmetal-prod
+aws ecs list-task-definition-families
 
-# Output:
-taskDefinitionArns:
-- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-backend-api:37
-- arn:aws:ecs:us-east-1:628892762446:task-definition/valmetal-prod-web-client:20
+families:
+- valmetal-prod-backend-api
+- valmetal-prod-web-client
 ```
-
-**Task Definition Business Functions:**
-- **valmetal-prod-backend-api**: IoT data processing, equipment management API, real-time monitoring backend
-- **valmetal-prod-web-client**: Web application serving for admin, client, and PWA interfaces
 
 ## ECS-004: Tagging Strategy and Amazon ECS Managed Tags and Tag Propagation
 

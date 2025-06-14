@@ -48,7 +48,7 @@ taskArns:
 - Amazon ECR for container image storage and versioning
 
 **Deployment Process:** 
-Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Developer commits in main branch trigger GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
+Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Merged code in main branch triggers GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
 
 **Rollback Procedures:** 
 Automatic rollback triggered by health check failures and CloudWatch alarms during deployment. Previous task definition versions remain available for rollback procedures.
@@ -66,34 +66,25 @@ GitHub Actions workflows integrate with AWS services to automate ECS task defini
 
 ### Response
 
-Each task definition family in the ACI-MTL architecture serves a distinct, singular business purpose without mixing application logic. This separation ensures clear boundaries between services and facilitates independent scaling, deployment, and management.
+**Task Definitions and Business Functions:**
 
-### Task Definition Families and Their Singular Business Functions
+1. **`acimtl-prod-api`** - Backend API Services
+   - Core API services and business logic layer for shelter management operations
 
-#### 1. `acimtl-prod-api` - Backend API Services
-**Business Purpose**: Core API services and business logic layer
-- **Specific Function**: RESTful API endpoints for shelter management operations
-- **Business Logic**: User authentication, data validation, business rules enforcement
-- **External Integrations**: AWS Cognito (user management), S3 (file operations), RDS (data persistence)
-- **No Mixed Logic**: Contains only backend API functionality - no frontend rendering or web serving capabilities
-
-#### 2. `acimtl-prod-web-client` - Frontend Web Application
-**Business Purpose**: User interface and web application serving
-- **Specific Function**: Server-side rendered web application using NextJS
-- **Business Logic**: UI rendering, client-side interactions, frontend routing
-- **User Interface**: Complete web interface for shelter management platform
-- **No Mixed Logic**: Contains only frontend presentation logic - no direct database access or business rule processing
+2. **`acimtl-prod-web-client`** - Frontend Web Application  
+   - User interface and web application serving for shelter management platform
 
 ### Evidence
 
-**Task Definition List:**
 ```bash
-> aws ecs list-task-definitions
+# List task definition families
+aws ecs list-task-definition-families
 
-taskDefinitionArns:
-- arn:aws:ecs:ca-central-1:484907525335:task-definition/acimtl-prod-api:17
-- arn:aws:ecs:ca-central-1:484907525335:task-definition/acimtl-prod-web-client:17
+families:
+- acimtl-prod-api
+- acimtl-prod-web-client
 ```
+
 ## ECS-004: Tagging Strategy and Amazon ECS Managed Tags and Tag Propagation
 
 ### Response
