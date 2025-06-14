@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -627,3 +627,22 @@ Our monitoring strategy follows the **Ingeno Monitoring and Observability Framew
 **1. Standardized Workload Health KPI Framework:**
 
 *Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*
+
+## OPE-002: Define a Customer Runbook/Playbook to Guide Operational Tasks
+
+### Response
+
+Ingeno has developed a comprehensive operational runbook that documents routine activities and provides systematic issue resolution procedures directly addressing the workload health KPIs defined in OPE-001. The runbook establishes standardized operational practices for monitoring, troubleshooting, and maintaining IoT platform workloads across ECS, DynamoDB, Timestream, and Lambda services.
+
+### Evidence
+
+**Standardized Operational Runbook:**
+
+*Reference: See `ingeno-operational-runbook.md` for complete runbook documentation.*
+
+The operational runbook covers:
+- **Health Check Routines:** Systematic verification procedures for CloudWatch dashboards and IoT-specific metrics monitoring
+- **Alert Response Procedures:** Structured response workflows for Critical, Warning, and Performance alerts based on OPE-001 KPIs
+- **Troubleshooting Scenarios:** Detailed diagnostic and resolution steps for ECS service failures, database performance issues, DynamoDB throttling, and Timestream ingestion problems
+- **Incident Resolution Workflow:** Classification procedures, escalation paths, and communication templates for IoT platform incidents
+- **Routine Maintenance Procedures:** Security patching and disaster recovery testing protocols for multi-service IoT architecture

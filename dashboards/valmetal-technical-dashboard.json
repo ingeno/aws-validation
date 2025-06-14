@@ -64,20 +64,16 @@
           "type": "metric",
           "properties": {
               "metrics": [
-                  [ "AWS/Lambda", "Invocations", "FunctionName", "valmetal-ModelToTypeMappingLambda-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-MailSender-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-ProvisioningLambda-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-TransformPayloadLambda-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-GetEntityNodesLambda-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-GetDeviceTypeEntitiesLambda-prod", { "region": "us-east-1" } ],
-                  [ "...", "valmetal-DeviceShadowPublisherLambda-prod", { "region": "us-east-1" } ]
+                  [ "AWS/Lambda", "Duration", "FunctionName", "valmetal-iot-processor" ],
+                  [ ".", "Invocations", ".", "." ],
+                  [ ".", "Errors", ".", "." ],
+                  [ ".", "Throttles", ".", "." ]
               ],
               "view": "timeSeries",
               "stacked": false,
               "region": "us-east-1",
               "title": "IoT Processing Lambda Metrics",
-              "period": 300,
-              "stat": "Average"
+              "period": 300
           }
       },
       {
@@ -93,95 +89,7 @@
                   [ "AWS/ApplicationELB", "RequestCountPerTarget", "TargetGroup", "targetgroup/valmet-AutoS-LGOYBJCUZVOS/b24cb74e67a44afc" ],
                   [ "...", "targetgroup/valmet-AutoS-ZOGFRX9YUEMO/0634935f00eec177" ]
               ],
-              "region": "us-east-1",
-              "title": "Load Balancer Targets",
-              "period": 300
-          }
-      },
-      {
-          "height": 6,
-          "width": 12,
-          "y": 18,
-          "x": 12,
-          "type": "metric",
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "SuccessfulRequestLatency", "TableName", "EntityHierarchy", "Operation", "Query", { "region": "us-east-1" } ],
-                  [ ".", "ReturnedItemCount", ".", ".", ".", ".", { "region": "us-east-1" } ],
-                  [ ".", "SuccessfulRequestLatency", ".", "ModelToDeviceTypeMapping", ".", ".", { "region": "us-east-1" } ],
-                  [ ".", "ReturnedItemCount", ".", ".", ".", ".", { "region": "us-east-1" } ],
-                  [ ".", "SuccessfulRequestLatency", ".", ".", ".", "Scan", { "region": "us-east-1" } ],
-                  [ ".", "ReturnedItemCount", ".", ".", ".", ".", { "region": "us-east-1" } ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "region": "us-east-1",
-              "title": "DynamoDB Requests",
-              "period": 300,
-              "stat": "Average"
-          }
-      },
-      {
-          "height": 6,
-          "width": 12,
-          "y": 12,
-          "x": 12,
-          "type": "metric",
-          "properties": {
-              "metrics": [
-                  [ "AWS/Timestream", "IngestedRecords", "DatabaseName", "valmetal", "TableName", "autoration-data", { "region": "us-east-1" } ],
-                  [ "...", "vmtu-data", { "region": "us-east-1" } ],
-                  [ ".", "ActiveMagneticStorePartitions", ".", ".", ".", "autoration-data", { "region": "us-east-1" } ],
-                  [ "...", "vmtu-data", { "region": "us-east-1" } ],
-                  [ ".", "CumulativeBytesScanned", ".", "valmetal-autorationx", "Operation", "Query" ],
-                  [ ".", "CumulativeBytesMetered", ".", ".", ".", "." ],
-                  [ ".", "UserErrors", ".", ".", ".", "." ],
-                  [ ".", "SystemErrors", ".", ".", ".", "." ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "region": "us-east-1",
-              "title": "Timestream Data Ingestion",
-              "period": 300
-          }
-      },
-      {
-          "height": 6,
-          "width": 12,
-          "y": 18,
-          "x": 0,
-          "type": "metric",
-          "properties": {
-              "metrics": [
-                  [ "AWS/DynamoDB", "SuccessfulRequestLatency", "TableName", "Client", "Operation", "GetItem", { "region": "us-east-1" } ],
-                  [ "...", "EntityHierarchy", ".", ".", { "region": "us-east-1" } ],
-                  [ "...", "Equipment", ".", ".", { "region": "us-east-1" } ],
-                  [ "...", "ModelToDeviceTypeMapping", ".", ".", { "region": "us-east-1" } ],
-                  [ "...", "Query" ],
-                  [ "...", "EntityHierarchy", ".", "." ],
-                  [ "...", "ModelToDeviceTypeMapping", ".", "Scan" ]
-              ],
-              "view": "timeSeries",
-              "stacked": false,
-              "region": "us-east-1",
-              "title": "DynamoDB Query Latency",
-              "period": 300
-          }
-      },
-      {
-          "type": "metric",
-          "x": 0,
-          "y": 12,
-          "width": 12,
-          "height": 6,
-          "properties": {
-              "view": "timeSeries",
-              "stacked": false,
-              "metrics": [
-                  [ "AWS/Timestream", "SuccessfulRequestLatency", "TableName", "feed_sequence", "DatabaseName", "valmetal-autorationx", "Operation", "WriteRecords" ]
-              ],
-              "region": "us-east-1",
-              "title": "Timestream Request Latency"
+              "region": "us-east-1"
           }
       }
   ]

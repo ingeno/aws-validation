@@ -365,7 +365,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
@@ -644,3 +644,22 @@ Our monitoring strategy follows the **Ingeno Monitoring and Observability Framew
 **1. Standardized Workload Health KPI Framework:**
 
 *Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*
+
+## OPE-002: Define a Customer Runbook/Playbook to Guide Operational Tasks
+
+### Response
+
+Ingeno has developed a comprehensive operational runbook that documents routine activities and provides systematic issue resolution procedures directly addressing the workload health KPIs defined in OPE-001. The runbook establishes standardized operational practices for monitoring, troubleshooting, and maintaining ECS-based customer workloads.
+
+### Evidence
+
+**Standardized Operational Runbook:**
+
+*Reference: See `ingeno-operational-runbook.md` for complete runbook documentation.*
+
+The operational runbook covers:
+- **Health Check Routines:** Systematic verification procedures for CloudWatch dashboards and alert status
+- **Alert Response Procedures:** Structured response workflows for Critical, Warning, and Performance alerts based on OPE-001 KPIs
+- **Troubleshooting Scenarios:** Detailed diagnostic and resolution steps for ECS service failures, database performance issues, load balancer problems, and DynamoDB throttling
+- **Incident Resolution Workflow:** Classification procedures, escalation paths, and communication templates
+- **Routine Maintenance Procedures:** Security patching and disaster recovery testing protocols
