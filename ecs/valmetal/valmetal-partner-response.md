@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -285,55 +285,21 @@ aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 
 
 ### Response
 
-The Valmetal platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads. Fargate provides comprehensive syscall filtering and container isolation that prevents malicious syscalls from reaching the underlying host operating system.
+The Valmetal platform leverages **AWS Fargate's built-in runtime security protections** for all containerized workloads.
 
 ### Evidence
 
-#### **Runtime Security Tool and Configuration**
-
-**AWS Fargate Runtime Security:**
-- **Tool**: AWS Fargate's built-in container runtime security
-- **Syscall Protection**: Fargate automatically restricts syscalls available to containers
-- **Host Isolation**: Complete isolation between containers and underlying host OS
-
-#### **Active Protection Evidence**
-
-TODO : is platformVersion 1.4.0 enough ? Why not LATEST?
-
-**Fargate Security Boundaries:**
 ```bash
 # Verify Fargate launch type provides runtime security
-aws ecs describe-services \
-  --cluster valmetal-prod-backend-api \
-  --services valmetal-prod-backend-api \
-  --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
-
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].{launchType:launchType,platformVersion:platformVersion}'
 # Output:
-launchType: FARGATE
-platformVersion: 1.4.0
+{
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0"
+}
 ```
 
-**Container Security Features:**
-- **Syscall Restrictions**: Fargate limits container syscalls to a secure subset
-- **No Host Access**: Containers cannot access underlying EC2 instances or host OS
-- **Process Isolation**: Each container runs in isolated compute environment
-- **Network Isolation**: Container networking isolated from host networking
-
-#### **Linux Container Security Configuration**
-
-**Fargate Security Model:**
-- **Operating System**: Amazon Linux 2 optimized for containers
-- **Container Runtime**: AWS-managed containerd with security enhancements
-- **Syscall Filtering**: Built-in seccomp profiles restrict dangerous syscalls
-- **Capability Dropping**: Non-essential Linux capabilities automatically dropped
-
-**Security Modules Active:**
-- **SELinux**: Security-Enhanced Linux enabled by default
-- **Seccomp**: Secure computing mode filters syscalls
-- **AppArmor**: Application security profiles (where applicable)
-- **Cgroups**: Resource isolation and security boundaries
-
-This Fargate-based runtime security ensures comprehensive protection against malicious syscalls while maintaining application functionality and performance.
+**Runtime Security Tool:** AWS Fargate provides built-in syscall filtering and container isolation that prevents malicious syscalls from reaching the underlying host operating system.
 
 ## ECS-012: Operating Systems Optimized for Containerized Workloads
 
