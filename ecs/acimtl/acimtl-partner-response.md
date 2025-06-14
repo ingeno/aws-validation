@@ -375,40 +375,29 @@ The ACI-MTL platform uses **Application Load Balancer (ALB)** for ingress contro
 
 ### Evidence
 
-#### **Ingress Controller and Infrastructure**
-
-**Ingress Controller**: AWS Application Load Balancer (ALB) with HTTPS/TLS termination
-
 ```bash
-# Verify VPC configuration for ECS services
-aws ecs describe-services \
-  --cluster acimtl-prod-api \
-  --services acimtl-prod-api \
-  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+# Verify network configuration and ingress setup
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+# Output:
+{
+  "securityGroups": ["sg-07e5a5aa26e76e167"],
+  "subnets": ["subnet-0372dfef1f99d4299", "subnet-0c8258e3ec5bf068f"]
+}
 
-# Output shows private subnet deployment:
-securityGroups:
-- sg-07e5a5aa26e76e167
-subnets:
-- subnet-0372dfef1f99d4299
-- subnet-0c8258e3ec5bf068f
-```
-
-**Infrastructure**: Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
-
-#### **Network Modes and Load Balancing Configuration**
-
-```bash
 # Verify awsvpc network mode for Fargate
 aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
-
-# Output confirms Fargate networking:
-networkMode: awsvpc
-requiresCompatibilities:
-- FARGATE
+# Output:
+{
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"]
+}
 ```
 
-**Configuration**: awsvpc network mode with IP-based ALB target groups for direct task communication
+**Ingress Controller:** AWS Application Load Balancer (ALB) with HTTPS/TLS termination
+
+**Infrastructure:** Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
+
+**Network Mode:** awsvpc network mode with IP-based ALB target groups for direct task communication
 
 ## ECS-016: IP Exhaustion Management
 

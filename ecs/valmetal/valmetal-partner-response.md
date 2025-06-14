@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -317,7 +317,7 @@ aws ecs describe-services --cluster valmetal-prod-backend-api --services valmeta
 
 ### Response
 
-The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems**.
+The Valmetal platform uses **AWS Fargate** exclusively, which provides **AWS-managed, ECS-optimized operating systems** without requiring customer management of underlying AMIs or infrastructure.
 
 ### Evidence
 
@@ -355,50 +355,29 @@ The Valmetal platform uses **Application Load Balancer (ALB)** for ingress contr
 
 ### Evidence
 
-#### **Ingress Controller and Infrastructure**
-
-**Ingress Controller**: AWS Application Load Balancer (ALB) with HTTPS/TLS termination
-
 ```bash
-# Verify VPC configuration for ECS services
-aws ecs describe-services \
-  --cluster valmetal-prod-backend-api \
-  --services valmetal-prod-backend-api \
-  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
+# Verify network configuration and ingress setup
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
+# Output:
+{
+  "assignPublicIp": "DISABLED",
+  "subnets": ["subnet-0891bef2c77a8e234", "subnet-0d9367f4e5cf291ab"]
+}
 
-# Output shows private subnet deployment:
-assignPublicIp: DISABLED
-subnets:
-- subnet-0891bef2c77a8e234
-- subnet-0d9367f4e5cf291ab
-```
-
-**Infrastructure**: Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
-
-#### **Network Modes and Load Balancing Configuration**
-
-```bash
 # Verify awsvpc network mode for Fargate
 aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.{networkMode:networkMode,requiresCompatibilities:requiresCompatibilities}'
-
-# Output confirms Fargate networking:
+# Output:
 {
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"]
 }
-
-# Verify service network configuration
-aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].networkConfiguration.awsvpcConfiguration'
-
-# Output shows private subnet placement:
-{
-  "assignPublicIp": "DISABLED",
-  "securityGroups": ["sg-0a343e12863986b6a"],
-  "subnets": ["subnet-06fc4817ddefe2868", "subnet-088d8ad6d6d617c95"]
-}
 ```
 
-**Configuration**: awsvpc network mode with IP-based ALB target groups for direct task communication
+**Ingress Controller:** AWS Application Load Balancer (ALB) with HTTPS/TLS termination
+
+**Infrastructure:** Private subnets for ECS tasks, ALB in public subnets, NAT Gateways for outbound access
+
+**Network Mode:** awsvpc network mode with IP-based ALB target groups for direct task communication
 
 ## ECS-016: IP Exhaustion Management
 
