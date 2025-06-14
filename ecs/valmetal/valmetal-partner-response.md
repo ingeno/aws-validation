@@ -89,35 +89,14 @@ families:
 
 ### Response
 
-The Valmetal platform implements a comprehensive version tracking strategy that maintains strict one-to-one mapping between application code, container images, and task definition revisions. The core versioning strategy is in place, and the current implementation meets AWS Service Delivery tagging requirements.
+**Tagging Strategy:** One-to-one mapping between Git commit SHA, container image tag, and task definition revision ensures version traceability.
 
-### Current Tagging Implementation
+**Tag Dimensions:** Environment, Application, Component, Version accurately represent task launches within ECS clusters.
 
-#### **One-to-One Version Mapping**
-Our deployment pipeline ensures complete traceability from source code to running containers:
+### Evidence
 
-- **Git Commit SHA ↔ Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
-- **Container Image ↔ Task Definition**: Task definitions reference specific versioned images from ECR
-- **Complete Traceability**: Every running task can be traced back to exact source code version
-
-### Evidence of Current Implementation
-
-#### **Version Tracking in Container Images**
 ```bash
-# API Task Definition - Image with Git commit SHA
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.containerDefinitions[0].image'
-# Output: "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
-
-# Web Client Task Definition - Image with Git commit SHA  
-aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.containerDefinitions[0].image'
-# Output: "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-web-client-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc"
-
-# Git Commit SHA: ede8f4c9a8fba49e904614fc80efd8936c9e41cc
-```
-
-#### **Current Task Definition Tags**
-```bash
-# Check current task definition tags
+# Task definition tags
 aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
@@ -127,31 +106,9 @@ aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 
   {"key": "Version", "value": "ede8f4c9a8fba49e904614fc80efd8936c9e41cc"}
 ]
 
-aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --include TAGS --query 'tags'
-# Output:
-[
-  {"key": "Environment", "value": "production"},
-  {"key": "Application", "value": "valmetal"},
-  {"key": "Component", "value": "web-client"},
-  {"key": "Version", "value": "ede8f4c9a8fba49e904614fc80efd8936c9e41cc"}
-]
-```
-
-#### **Current Service Tag Propagation Settings**
-```bash
-# Check tag propagation configuration
-aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].propagateTags'
-# Output: "TASK_DEFINITION"
-
-aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].propagateTags'
-# Output: "TASK_DEFINITION"
-
-# Check ECS managed tags status
-aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].enableECSManagedTags'
-# Output: true
-
-aws ecs describe-services --cluster valmetal-prod-web-client --services valmetal-prod-web-client --query 'services[0].enableECSManagedTags'
-# Output: true
+# ECS managed tags and tag propagation enabled
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].{propagateTags:propagateTags,enableECSManagedTags:enableECSManagedTags}'
+# Output: {"propagateTags": "TASK_DEFINITION", "enableECSManagedTags": true}
 ```
 
 ## ECS-005: IAM Roles and Security

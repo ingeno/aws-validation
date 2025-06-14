@@ -89,35 +89,14 @@ families:
 
 ### Response
 
-The ACI-MTL platform implements a comprehensive version tracking strategy that maintains strict one-to-one mapping between application code, container images, and task definition revisions. The core versioning strategy is in place, and the current implementation meets AWS Service Delivery tagging requirements.
+**Tagging Strategy:** One-to-one mapping between Git commit SHA, container image tag, and task definition revision ensures version traceability.
 
-### Current Tagging Implementation
+**Tag Dimensions:** Environment, Application, Component, Version accurately represent task launches within ECS clusters.
 
-#### **One-to-One Version Mapping**
-Our deployment pipeline ensures complete traceability from source code to running containers:
+### Evidence
 
-- **Git Commit SHA ↔ Container Image Tag**: Each deployment uses specific Git commit SHAs embedded in container image tags
-- **Container Image ↔ Task Definition**: Task definitions reference specific versioned images from ECR
-- **Complete Traceability**: Every running task can be traced back to exact source code version
-
-### Evidence of Current Implementation
-
-#### **Version Tracking in Container Images**
 ```bash
-# API Task Definition - Image with Git commit SHA
-aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.containerDefinitions[0].image'
-# Output: "471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
-
-# Web Client Task Definition - Image with Git commit SHA  
-aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --query 'taskDefinition.containerDefinitions[0].image'
-# Output: "471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-web-client-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
-
-# Git Commit SHA: 4f3ebae951a368bda79d84632a831a4f266b1bed
-```
-
-#### **Current Task Definition Tags**
-```bash
-# Check current task definition tags
+# Task definition tags
 aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --include TAGS --query 'tags'
 # Output: 
 [
@@ -127,31 +106,13 @@ aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --include 
   {"key": "Version", "value": "4f3ebae951a368bda79d84632a831a4f266b1bed"}
 ]
 
-aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --include TAGS --query 'tags'
-# Output:
-[
-  {"key": "Environment", "value": "production"},
-  {"key": "Application", "value": "acimtl"},
-  {"key": "Component", "value": "web-client"},
-  {"key": "Version", "value": "4f3ebae951a368bda79d84632a831a4f266b1bed"}
-]
-```
-
-#### **Current Service Tag Propagation Settings**
-```bash
-# Check tag propagation configuration
-aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].propagateTags'
-# Output: "TASK_DEFINITION"
-
-aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --query 'services[0].propagateTags'
-# Output: "TASK_DEFINITION"
-
-# Check ECS managed tags status
-aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].enableECSManagedTags'
-# Output: true
-
-aws ecs describe-services --cluster acimtl-prod-web-client --services acimtl-prod-web-client --query 'services[0].enableECSManagedTags'
-# Output: true
+# ECS managed tags and tag propagation enabled
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].{propagateTags:propagateTags,enableECSManagedTags:enableECSManagedTags}'
+# Output: 
+{
+  "propagateTags": "TASK_DEFINITION", 
+  "enableECSManagedTags": true
+}
 ```
 
 ## ECS-005: IAM Roles and Security
