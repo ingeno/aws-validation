@@ -119,7 +119,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-Each task definition family has dedicated IAM roles following the principle of least privilege.
+Each task definition family in the ACI-MTL platform has dedicated IAM roles following the principle of least privilege. The architecture implements strict role separation where each service has access only to the specific AWS resources and actions required for its designated business function.
 
 ### Evidence
 
@@ -133,50 +133,92 @@ aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --q
 # Output: "arn:aws:iam::484907525335:role/acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm"
 ```
 
+#### **API Service Role Permissions (Backend Policy)**
+The API service role demonstrates precise resource scoping:
+
+**Cognito Identity Provider Permissions:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "cognito-idp:AdminCreateUser",
+    "cognito-idp:AdminDeleteUser", 
+    "cognito-idp:AdminDisableUser",
+    "cognito-idp:AdminEnableUser",
+    "cognito-idp:AdminGetUser",
+    "cognito-idp:AdminUpdateUserAttributes"
+  ],
+  "Resource": "arn:aws:cognito-idp:ca-central-1:484907525335:userpool/ca-central-1_J0PRtqr7r"
+}
+```
+
+**CloudWatch Logs Permissions:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "logs:CreateLogStream",
+    "logs:DescribeLogStreams", 
+    "logs:PutLogEvents"
+  ],
+  "Resource": "arn:aws:logs:ca-central-1:484907525335:log-group:acimtl-prod-api:*"
+}
+```
+
+**S3 Permissions with VPC Restriction:**
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:DeleteObject",
+    "s3:GetObject",
+    "s3:ListBucket",
+    "s3:PutObject"
+  ],
+  "Resource": [
+    "arn:aws:s3:::acimtl-prod-bucket-clientsfiles6bf6a7b3-ahcxoubzmxqq/*",
+    "arn:aws:s3:::acimtl-prod-bucket-clientsfiles6bf6a7b3-ahcxoubzmxqq"
+  ],
+  "Condition": {
+    "StringEqualsIfExists": {
+      "aws:SourceVpc": "acimtl-prod"
+    }
+  }
+}
+
+```
+
+#### **Web Client Role Permissions**
+```bash
+# Check Web Client role policies
+aws iam list-attached-role-policies \
+  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
+# Output: AttachedPolicies: []
+
+aws iam list-role-policies \
+  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
+# Output: PolicyNames: []
+```
 ## ECS-006: Task Sizing and Resource Limits
 
 ### Response
 
-The ACI-MTL platform implements precise task sizing based on application requirements, with explicit resource reservations and limits ensuring optimal cluster capacity utilization and predictable scaling behavior. All task definitions specify both CPU and memory at the task level, enabling ECS to make informed scheduling decisions.
-
-### Resource Allocation Strategy
-
-#### **Application-Based Sizing**
-- **API Service**: Sized for backend processing, database operations, and API request handling
-- **Web Client**: Sized for server-side rendering and static content serving
-- **Performance Testing**: Resource allocations validated through load testing and monitoring
-
-#### **Explicit Resource Reservations**
-- **CPU Allocation**: Specified in CPU units (1024 = 1 vCPU) based on workload characteristics
-- **Memory Allocation**: Specified in MB with buffer for peak usage scenarios
-- **Fargate Enforcement**: Resources strictly enforced preventing resource contention
+Task definitions specify explicit CPU and memory resource reservations based on application requirements. Resource limits were determined through empirical testing under production load scenarios to ensure optimal performance and cost efficiency.
 
 ### Evidence
 
-#### **Task Definition Resource Specifications**
-
-**API Service Resource Allocation:**
 ```bash
-# Get API task definition resource allocation
-aws ecs describe-task-definition \
-  --task-definition acimtl-prod-api:17 \
-  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
-
+# API Service Resource Configuration
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 # Output:
 {
   "cpu": "512",
   "memory": "1024", 
   "family": "acimtl-prod-api"
 }
-```
 
-**Web Client Resource Allocation:**
-```bash
-# Get Web Client task definition resource allocation
-aws ecs describe-task-definition \
-  --task-definition acimtl-prod-web-client:17 \
-  --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
-
+# Web Client Resource Configuration
+aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
 # Output:
 {
   "cpu": "512",
@@ -184,69 +226,6 @@ aws ecs describe-task-definition \
   "family": "acimtl-prod-web-client"
 }
 ```
-
-#### **Complete Task Definition Example**
-
-**API Service Task Definition with Resource Limits:**
-```json
-{
-  "family": "acimtl-prod-api",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "512",
-  "memory": "1024",
-  "containerDefinitions": [
-    {
-      "name": "acimtl-prod-api",
-      "image": "471112604643.dkr.ecr.ca-central-1.amazonaws.com/acimtl-api-ecr:prod-4f3ebae951a368bda79d84632a831a4f266b1bed",
-      "cpu": 0,
-      "essential": true,
-      "portMappings": [
-        {
-          "containerPort": 8080,
-          "hostPort": 8080,
-          "protocol": "tcp"
-        }
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "acimtl-prod-api",
-          "awslogs-region": "ca-central-1",
-          "awslogs-stream-prefix": "prod-4f3ebae951a368bda79d84632a831a4f266b1bed"
-        }
-      },
-      "environment": [
-        {
-          "name": "DATABASE_HOST",
-          "value": "acimtl-prod-database.cl66cau86sn6.ca-central-1.rds.amazonaws.com"
-        }
-      ],
-      "secrets": [
-        {
-          "name": "DATABASE_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ca-central-1:484907525335:secret:/acimtl-prod-database/database-WWHhOQ:password::"
-        }
-      ]
-    }
-  ],
-  "taskRoleArn": "arn:aws:iam::484907525335:role/acimtl-prod-api-AutoScaledFargateServiceTaskDefTask-W0Y5J4Wd4W4H",
-  "executionRoleArn": "arn:aws:iam::484907525335:role/acimtl-prod-api-AutoScaledFargateServiceExecutionRo-Tyxw1LN7OPDS"
-}
-
-#### **API Service (512 CPU / 1024 MB Memory)**
-- **Database Operations**: Sufficient CPU for database query processing and connection management
-- **API Processing**: Memory allocation supports JSON processing, authentication, and business logic
-- **File Operations**: Resources adequate for S3 upload/download operations and document processing
-- **Scaling Considerations**: Resource allocation enables horizontal scaling based on request volume
-
-#### **Web Client Service (512 CPU / 1024 MB Memory)**
-- **Server-Side Rendering**: CPU allocation supports NextJS SSR processing
-- **Static Content**: Memory sufficient for asset caching and page generation
-- **Client Requests**: Resources handle concurrent user sessions and page loads
-- **Responsive Design**: Allocation supports dynamic content generation
-
-This task sizing strategy ensures optimal resource utilization while maintaining application performance requirements and enabling effective capacity planning across the ACI-MTL platform.
 
 ## ECS-007: Cluster Capacity Management and ECS Capacity Providers
 

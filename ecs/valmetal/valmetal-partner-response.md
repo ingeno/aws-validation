@@ -171,28 +171,13 @@ aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 -
 
 ### Response
 
-The Valmetal platform implements precise task sizing based on application requirements, with explicit resource reservations and limits ensuring optimal cluster capacity utilization and predictable scaling behavior. All task definitions specify both CPU and memory at the task level, enabling ECS to make informed scheduling decisions.
-
-### Resource Allocation Strategy
-
-#### **Application-Based Sizing**
-- **API Service**: Sized for backend processing, database operations, and API request handling
-- **Web Client**: Sized for server-side rendering and static content serving
-- **Performance Testing**: Resource allocations validated through load testing and monitoring
-
-#### **Explicit Resource Reservations**
-- **CPU Allocation**: Specified in CPU units (1024 = 1 vCPU) based on workload characteristics
-- **Memory Allocation**: Specified in MB with buffer for peak usage scenarios
-- **Fargate Enforcement**: Resources strictly enforced preventing resource contention
+Task definitions specify explicit CPU and memory resource reservations based on application requirements. Resource limits were determined through empirical testing under production load scenarios to ensure optimal performance and cost efficiency.
 
 ### Evidence
-
-#### **Resource Reservation and Limits**
 
 ```bash
 # API Service Resource Configuration
 aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
-
 # Output:
 {
   "cpu": "512",
@@ -202,7 +187,6 @@ aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 
 
 # Web Client Resource Configuration  
 aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.{cpu:cpu,memory:memory,family:family}'
-
 # Output:
 {
   "cpu": "512",
@@ -210,54 +194,6 @@ aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 -
   "family": "valmetal-prod-web-client"
 }
 ```
-
-#### **Complete Task Definition Example**
-
-**API Service Task Definition with Resource Limits:**
-```json
-{
-  "family": "valmetal-prod-backend-api",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "512",
-  "memory": "1024",
-  "containerDefinitions": [
-    {
-      "name": "valmetal-prod-backend-api",
-      "image": "497409020770.dkr.ecr.us-east-1.amazonaws.com/valmetal-api-ecr:prod-ede8f4c9a8fba49e904614fc80efd8936c9e41cc",
-      "essential": true,
-      "portMappings": [
-        {
-          "containerPort": 3000,
-          "protocol": "tcp"
-        }
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "valmetal-prod-api",
-          "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "ecs"
-        }
-      }
-    }
-  ],
-  "taskRoleArn": "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceT-sIV3LgyVICHP",
-  "executionRoleArn": "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceExecutionRo-B7A8C9D4E5F6"
-}
-```
-
-#### **Resource Sizing Rationale**
-
-**API Service (512 CPU / 1024 MB Memory)**
-- **IoT Data Processing**: Sufficient CPU for real-time sensor data ingestion and processing
-- **Database Operations**: Memory allocation supports database query processing and connection management
-- **Equipment Monitoring**: Resources sized for continuous farming equipment monitoring and alerting
-
-**Web Client (512 CPU / 1024 MB Memory)** 
-- **Multi-Interface Serving**: CPU allocation supports NextJS SSR for Admin, Client, and PWA interfaces
-- **Static Content**: Memory allocation handles web application assets and rendering requirements
-- **User Sessions**: Resource allocation supports concurrent farming equipment management sessions
 
 ## ECS-007: Cluster Capacity Management and ECS Capacity Providers
 
