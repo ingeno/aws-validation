@@ -119,104 +119,20 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-Each task definition family in the ACI-MTL platform has dedicated IAM roles following the principle of least privilege. The architecture implements strict role separation where each service has access only to the specific AWS resources and actions required for its designated business function.
-
-### IAM Role Architecture
-
-#### **Dedicated Roles per Task Family**
-- **API Service**: Separate task role and execution role with backend-specific permissions
-- **Web Client**: Minimal permissions model with only essential ECS execution capabilities
-- **Role Isolation**: No shared roles between services, ensuring clear security boundaries
-
-#### **Least Privilege Implementation**
-- **Explicit Allow Statements**: All policies contain only necessary permissions
-- **Resource-Specific ARNs**: No wildcards used except where required for service functionality
-- **Scoped Actions**: Actions limited to minimum required for business operations
-- **VPC Restrictions**: Additional network-based security controls where applicable
+Each task definition family has dedicated IAM roles following the principle of least privilege.
 
 ### Evidence
 
-#### **Task Role ARNs and Separation**
 ```bash
 # API Task Role
-aws ecs describe-task-definition \
-  --task-definition acimtl-prod-api:17 \
-  --query 'taskDefinition.taskRoleArn'
+aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::484907525335:role/acimtl-prod-api-AutoScaledFargateServiceTaskDefTask-W0Y5J4Wd4W4H"
 
 # Web Client Task Role  
-aws ecs describe-task-definition \
-  --task-definition acimtl-prod-web-client:17 \
-  --query 'taskDefinition.taskRoleArn'
+aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::484907525335:role/acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm"
 ```
 
-#### **API Service Role Permissions (Backend Policy)**
-The API service role demonstrates precise resource scoping:
-
-**Cognito Identity Provider Permissions:**
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "cognito-idp:AdminCreateUser",
-    "cognito-idp:AdminDeleteUser", 
-    "cognito-idp:AdminDisableUser",
-    "cognito-idp:AdminEnableUser",
-    "cognito-idp:AdminGetUser",
-    "cognito-idp:AdminUpdateUserAttributes"
-  ],
-  "Resource": "arn:aws:cognito-idp:ca-central-1:484907525335:userpool/ca-central-1_J0PRtqr7r"
-}
-```
-
-**CloudWatch Logs Permissions:**
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "logs:CreateLogStream",
-    "logs:DescribeLogStreams", 
-    "logs:PutLogEvents"
-  ],
-  "Resource": "arn:aws:logs:ca-central-1:484907525335:log-group:acimtl-prod-api:*"
-}
-```
-
-**S3 Permissions with VPC Restriction:**
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "s3:DeleteObject",
-    "s3:GetObject",
-    "s3:ListBucket",
-    "s3:PutObject"
-  ],
-  "Resource": [
-    "arn:aws:s3:::acimtl-prod-bucket-clientsfiles6bf6a7b3-ahcxoubzmxqq/*",
-    "arn:aws:s3:::acimtl-prod-bucket-clientsfiles6bf6a7b3-ahcxoubzmxqq"
-  ],
-  "Condition": {
-    "StringEqualsIfExists": {
-      "aws:SourceVpc": "acimtl-prod"
-    }
-  }
-}
-
-```
-
-#### **Web Client Role Permissions**
-```bash
-# Check Web Client role policies
-aws iam list-attached-role-policies \
-  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
-# Output: AttachedPolicies: []
-
-aws iam list-role-policies \
-  --role-name acimtl-prod-web-client-AutoScaledFargateServiceTask-2PQCxZE72dbm
-# Output: PolicyNames: []
-```
 ## ECS-006: Task Sizing and Resource Limits
 
 ### Response

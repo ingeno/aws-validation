@@ -108,7 +108,11 @@ aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 
 
 # ECS managed tags and tag propagation enabled
 aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].{propagateTags:propagateTags,enableECSManagedTags:enableECSManagedTags}'
-# Output: {"propagateTags": "TASK_DEFINITION", "enableECSManagedTags": true}
+# Output: 
+{
+  "propagateTags": "TASK_DEFINITION", 
+  "enableECSManagedTags": true
+}
 ```
 
 ## ECS-005: IAM Roles and Security
@@ -117,34 +121,15 @@ aws ecs describe-services --cluster valmetal-prod-backend-api --services valmeta
 
 Each task definition family in the Valmetal platform has dedicated IAM roles following the principle of least privilege. The architecture implements strict role separation where each service has access only to the specific AWS resources and actions required for its designated business function.
 
-### IAM Role Architecture
-
-#### **Dedicated Roles per Task Family**
-- **API Service**: Separate task role and execution role with backend-specific permissions
-- **Web Client**: Minimal permissions model with only essential ECS execution capabilities
-- **Role Isolation**: No shared roles between services, ensuring clear security boundaries
-
-#### **Least Privilege Implementation**
-- **Explicit Allow Statements**: All policies contain only necessary permissions
-- **Resource-Specific ARNs**: No wildcards used except where required for service functionality
-- **Scoped Actions**: Actions limited to minimum required for business operations
-- **VPC Restrictions**: Additional network-based security controls where applicable
-
 ### Evidence
-
-#### **Task Role ARNs and Least Privilege Implementation**
 
 ```bash
 # API Service Task Role  
-aws ecs describe-task-definition \
-  --task-definition valmetal-prod-backend-api:37 \
-  --query 'taskDefinition.taskRoleArn'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::628892762446:role/valmetal-prod-backend-api-AutoScaledFargateServiceT-sIV3LgyVICHP"
 
 # Web Client Task Role  
-aws ecs describe-task-definition \
-  --task-definition valmetal-prod-web-client:20 \
-  --query 'taskDefinition.taskRoleArn'
+aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 --query 'taskDefinition.taskRoleArn'
 # Output: "arn:aws:iam::628892762446:role/valmetal-prod-web-client-AutoScaledFargateServiceTa-MkTSyCuPPpEs"
 ```
 
