@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -504,22 +504,11 @@ The Valmetal platform secures access to persistent storage (RDS, DynamoDB, Times
 
 ### Evidence
 
-#### **Access Requirements Evaluation**
+**Access Requirements Evaluation:** Only the API service requires direct storage access for database operations, file management, and data processing. Web applications have no direct storage access requirements.
 
-**Storage Access Analysis:**
-- **RDS Database**: Only API service requires database access for equipment records and relational data
-- **DynamoDB**: Only API service requires NoSQL access for IoT device states and real-time processing
-- **Timestream**: Only API service requires time-series database access for sensor data analytics
-- **S3 File Storage**: Only API service requires file upload/download capabilities for documents and archival
-- **Web Applications**: No direct storage access required (Admin, Client, PWA apps)
+**Security Method:** IAM role-based access control with least privilege principle - API service has IAM task role with storage permissions, while web applications have no storage permissions in their IAM task roles.
 
-#### **Security Method**
-
-**IAM Role-Based Access Control:**
-- **API Service**: IAM task role with RDS, DynamoDB, Timestream, and S3 permissions
-- **Web Applications**: No storage permissions in IAM task roles
-- **VPC Security**: RDS database in private subnets, accessible only via VPC
-- **Service Isolation**: Each storage service accessed through dedicated IAM policies with least privilege
+**Access Control Configuration:** RDS database deployed in private subnets accessible only via VPC, with dedicated IAM policies for each storage service ensuring service isolation.
 
 ## ECS-022: EBS Task Placement Constraints
 

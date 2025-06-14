@@ -520,19 +520,11 @@ The ACI-MTL platform secures access to persistent storage (RDS and S3) through *
 
 ### Evidence
 
-#### **Access Requirements Evaluation**
+**Access Requirements Evaluation:** Only the API service requires direct storage access for database operations and file management. The web client has no direct storage access requirements.
 
-**Storage Access Analysis:**
-- **RDS Database**: Only API service requires database access for application data
-- **S3 File Storage**: Only API service requires file upload/download capabilities
-- **Web Client**: No direct storage access required
+**Security Method:** IAM role-based access control with least privilege principle - API service has IAM task role with storage permissions, while web client has no storage permissions in its IAM task role.
 
-#### **Security Method**
-
-**IAM Role-Based Access Control:**
-- **API Service**: IAM task role with RDS and S3 permissions
-- **Web Client**: No storage permissions in IAM task role
-- **VPC Security**: Database in private subnets, accessible only via VPC
+**Access Control Configuration:** Database deployed in private subnets accessible only via VPC, ensuring secure access control.
 
 ## ECS-022: EBS Task Placement Constraints
 
