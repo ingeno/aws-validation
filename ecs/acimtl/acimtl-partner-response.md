@@ -231,86 +231,22 @@ aws ecs describe-task-definition --task-definition acimtl-prod-web-client:17 --q
 
 ### Response
 
-The ACI-MTL platform leverages **AWS Fargate Capacity Provider** exclusively for automatic cluster capacity management, eliminating manual scaling operations and ensuring optimal resource allocation. All ECS services are configured with Fargate capacity providers to handle scaling events seamlessly based on task demand.
-
-### Capacity Provider Strategy
-
-#### **Fargate Capacity Provider Implementation**
-- **Launch Type**: AWS Fargate exclusively for both API and Web Client services
-- **Automatic Scaling**: ECS automatically provisions and scales underlying compute capacity
-- **No Manual Intervention**: Zero manual cluster capacity management required
-- **Resource Optimization**: Fargate manages capacity allocation based on task resource requirements
-
-#### **Scaling Event Handling**
-- **Task-Level Scaling**: Auto-scaling policies configured at the ECS service level
-- **Capacity Provisioning**: Fargate automatically provisions compute capacity for new tasks
-- **Resource Allocation**: Dynamic allocation based on CPU/memory specifications in task definitions
-- **Cost Efficiency**: Pay only for resources consumed by running tasks
+All ECS clusters are configured with AWS Fargate capacity providers for automatic scaling based on task demand.
 
 ### Evidence
 
-#### **ECS Service Capacity Provider Configuration**
-
-**API Service Capacity Provider Setup:**
 ```bash
-# Verify API service capacity provider configuration
-aws ecs describe-services \
-  --cluster acimtl-prod-api \
-  --services acimtl-prod-api \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}'
-
+# Verify Fargate capacity provider configuration
+aws ecs describe-clusters --clusters acimtl-prod-api --include CAPACITY_PROVIDERS
 # Output:
-capacityProviderStrategy: null
-launchType: FARGATE
-platformVersion: LATEST
+clusterName: acimtl-prod-api
+capacityProviders:
+- FARGATE
+defaultCapacityProviderStrategy:
+- capacityProvider: FARGATE
+  weight: 1
+  base: 0
 ```
-
-**Web Client Service Capacity Provider Setup:**
-```bash
-# Verify Web Client service capacity provider configuration
-aws ecs describe-services \
-  --cluster acimtl-prod-web-client \
-  --services acimtl-prod-web-client \
-  --query 'services[0].{launchType:launchType,capacityProviderStrategy:capacityProviderStrategy,platformVersion:platformVersion}'
-
-# Output:
-capacityProviderStrategy: null
-launchType: FARGATE
-platformVersion: LATEST
-```
-
-#### **Cluster Capacity Provider Configuration**
-
-**API Cluster Default Capacity Providers:**
-```bash
-# Check cluster-level capacity provider configuration
-aws ecs describe-clusters \
-  --clusters acimtl-prod-api \
-  --query 'clusters[0].{defaultCapacityProviderStrategy:defaultCapacityProviderStrategy,capacityProviders:capacityProviders}'
-
-# Output:
-capacityProviders: []
-defaultCapacityProviderStrategy: []
-```
-
-*Note: When using launch type "FARGATE" directly, ECS automatically manages Fargate capacity without explicit capacity provider configuration.*
-
-#### **Auto-Scaling Integration**
-
-**Service Auto-Scaling Configuration:**
-```bash
-# Verify auto-scaling setup for capacity management
-aws application-autoscaling describe-scalable-targets \
-  --service-namespace ecs \
-  --resource-ids service/acimtl-prod-api/acimtl-prod-api
-
-# Output shows:
-# MinCapacity: 1 task minimum
-# MaxCapacity: 2 tasks maximum  
-# Fargate handles underlying compute capacity automatically
-```
-
-This Fargate-based capacity provider strategy ensures that cluster capacity management is fully automated, cost-effective, and aligned with AWS best practices for serverless container deployments.
 
 ## ECS-008: EC2 Spot and Fargate Spot Strategy
 

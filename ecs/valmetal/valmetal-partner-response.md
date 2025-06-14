@@ -199,26 +199,13 @@ aws ecs describe-task-definition --task-definition valmetal-prod-web-client:20 -
 
 ### Response
 
-The Valmetal platform leverages **AWS Fargate Capacity Provider** exclusively for automatic cluster capacity management, eliminating manual scaling operations and ensuring optimal resource allocation. All ECS services are configured with Fargate capacity providers to handle scaling events seamlessly based on task demand.
-
-### Capacity Provider Strategy
-
-#### **Fargate Capacity Provider Implementation**
-- **Launch Type**: AWS Fargate exclusively for both API and Web Client services
-- **Automatic Scaling**: ECS automatically provisions and scales underlying compute capacity
-- **No Manual Intervention**: Zero manual cluster capacity management required
-- **Resource Optimization**: Fargate manages capacity allocation based on task resource requirements
+All ECS clusters are configured with AWS Fargate capacity providers for automatic scaling based on task demand.
 
 ### Evidence
 
-#### **Capacity Provider Configuration**
-
 ```bash
 # Verify Fargate capacity provider configuration
-aws ecs describe-clusters \
-  --clusters valmetal-prod-backend-api \
-  --include CAPACITY_PROVIDERS
-
+aws ecs describe-clusters --clusters valmetal-prod-backend-api --include CAPACITY_PROVIDERS
 # Output:
 clusterName: valmetal-prod-backend-api
 capacityProviders:
@@ -228,30 +215,6 @@ defaultCapacityProviderStrategy:
   weight: 1
   base: 0
 ```
-
-#### **Auto-Scaling Integration**
-
-```bash
-# Verify ECS service auto-scaling configuration
-aws ecs describe-services \
-  --cluster valmetal-prod-backend-api \
-  --services valmetal-prod-backend-api \
-  --query 'services[0].{desiredCount:desiredCount,runningCount:runningCount,pendingCount:pendingCount}'
-
-# Output:
-{
-  "desiredCount": 2,
-  "runningCount": 2, 
-  "pendingCount": 0
-}
-```
-
-**Scaling Strategy:**
-- **Target Tracking**: CPU and memory utilization targets for automatic scaling
-- **IoT Load Balancing**: Scaling triggers based on farming equipment data processing load
-- **Cost Efficiency**: Pay only for resources consumed by running tasks
-
-This Fargate-based capacity provider strategy ensures that cluster capacity management is fully automated, cost-effective, and aligned with AWS best practices for serverless container deployments.
 
 ## ECS-008: EC2 Spot and Fargate Spot Strategy
 
