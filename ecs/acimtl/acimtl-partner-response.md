@@ -725,3 +725,31 @@ Security groups are used to control traffic flow between subnets and to the inte
 - A bastion host is deployed in public subnets to access private subnets 
   - Developers can connect to the bastion host using session manager to access private subnets
   - SSH tunneling is used between the bastion and database to troubleshoot database issues or to perform database maintenance
+
+## NETSEC-002: Define Data Encryption Policy for Data at Rest and in Transit
+### Response
+
+Ingeno enforces comprehensive data encryption for all customer environments using AWS native encryption services and industry-standard protocols. Our standardized encryption policy ensures all data is protected both at rest and in transit with centralized key management through AWS KMS.
+
+### Evidence
+
+**Internet-Facing Endpoints Encryption:** 
+- Public endpoints (Load balancers for UI and API) use HTTPS
+- AWS Certificate Manager provides SSL/TLS certificates for HTTPS listeners
+- Automatic redirection ensures all traffic uses encrypted connections
+
+**External API Communication Encryption:**
+- All external API calls use HTTPS/TLS (mainly to invoke other AWS services)
+- AWS SDK Encryption: All AWS service communications automatically encrypted in transit
+- Certificate Validation: Enforced certificate validation for all outbound connections
+
+**Data at Rest Encryption:**
+- RDS Database: PostgreSQL database encrypted at rest using customer-managed KMS key (e.g. for production : `arn:aws:kms:us-east-1:628892762446:key/95c863e4-8572-4e22-a4eb-0a559f25db34`) 
+- CloudWatch Logs: Application logs and VPC flow logs encrypted using KMS keys
+- ECS Fargate: Container runtime and ephemeral storage encrypted using AWS Fargate platform encryption
+
+**Key Management Implementation:**
+- AWS KMS Integration: Centralized key management with customer-managed keys for production databases
+- Key Rotation: Automatic annual rotation for AWS managed keys, scheduled rotation for customer-managed keys
+- Access Control: KMS key policies restrict access to authorized IAM roles and services only
+- Audit Logging: All key usage tracked through CloudTrail for security compliance
