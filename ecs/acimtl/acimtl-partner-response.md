@@ -411,6 +411,24 @@ aws ecs describe-task-definition --task-definition acimtl-prod-api:17 --query 't
 
 The ACI-MTL platform uses **direct VPC networking** for service communication with AWS services, and **Application Load Balancer** for external connectivity.
 
+### Evidence
+
+```bash
+# Verify VPC networking configuration
+aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,securityGroups:securityGroups}'
+# Output:
+{
+  "securityGroups": ["sg-07e5a5aa26e76e167"],
+  "subnets": ["subnet-0372dfef1f99d4299", "subnet-0c8258e3ec5bf068f"]
+}
+```
+
+**AWS Services Integration:** Direct VPC connectivity through private subnets for RDS, S3 via VPC endpoints, and direct service integration for Cognito authentication.
+
+**External Connectivity:** Application Load Balancer with TLS termination for secure external access.
+
+**Internal Communication:** Direct VPC networking within private subnets without service mesh due to stateless architecture.
+
 ## ECS-018: Observability Mechanisms
 
 ### Response

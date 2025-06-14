@@ -97,7 +97,7 @@ families:
 
 ```bash
 # Task definition tags
-aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --query 'tags'
+aws ecs describe-task-definition --task-definition valmetal-prod-backend-api:37 --include TAGS --query 'tags'
 # Output: 
 [
   {"key": "Environment", "value": "production"},
@@ -393,56 +393,21 @@ The Valmetal platform uses **direct VPC networking** for service communication w
 
 ### Evidence
 
-#### **Service Communication Architecture**
-
-**AWS Services Integration:**
-- **RDS Database**: Direct VPC connectivity through private subnets
-- **DynamoDB**: VPC endpoints for secure NoSQL database access
-- **Timestream**: Direct AWS service integration for time-series data
-- **S3**: VPC endpoints for secure object storage access
-- **AWS IoT Core**: Direct service integration for device communication
-- **Cognito**: Direct AWS service integration for authentication
-
-**External Connectivity:**
-- **Application Load Balancer**: TLS-secured ingress for web applications
-- **API Gateway**: Not used - direct ALB integration preferred for simplicity
-- **Internal Communication**: No service mesh required due to stateless architecture
-
-#### **Network Configuration**
-
 ```bash
 # Verify VPC networking configuration
-aws ecs describe-services \
-  --cluster valmetal-prod-backend-api \
-  --services valmetal-prod-backend-api \
-  --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
-
-# Output shows private networking:
-assignPublicIp: DISABLED
-subnets:
-- subnet-0891bef2c77a8e234
-- subnet-0d9367f4e5cf291ab
+aws ecs describe-services --cluster valmetal-prod-backend-api --services valmetal-prod-backend-api --query 'services[0].networkConfiguration.awsvpcConfiguration.{subnets:subnets,assignPublicIp:assignPublicIp}'
+# Output:
+{
+  "assignPublicIp": "DISABLED",
+  "subnets": ["subnet-0891bef2c77a8e234", "subnet-0d9367f4e5cf291ab"]
+}
 ```
 
-**Communication Patterns:**
-- **Service-to-Service**: Direct VPC networking within private subnets
-- **Service-to-AWS**: VPC endpoints and direct service integration
-- **External-to-Service**: ALB with TLS termination and target groups
-- **IoT Devices**: AWS IoT Core with device certificates and policies
+**AWS Services Integration:** Direct VPC connectivity through private subnets for RDS, DynamoDB via VPC endpoints, S3 via VPC endpoints, and direct service integration for IoT Core and Cognito.
 
-#### **IoT Integration and Farming Equipment Connectivity**
+**External Connectivity:** Application Load Balancer with TLS termination for secure external access.
 
-**IoT Device Communication:**
-- **Device Certificates**: X.509 certificates for secure device authentication
-- **Device Policies**: Custom policies for device authorization and access control
-- **Device Shadows**: Virtual device representations for efficient data processing
-- **MQTT Protocol**: Message Queue Telemetry Transport for low-bandwidth device communication
-
-**Farming Equipment Connectivity:**
-- **Real-Time Data Processing**: Timestream database for efficient sensor data processing
-- **Equipment Monitoring**: Real-time monitoring and alerting for equipment performance
-- **Predictive Maintenance**: Machine learning models for predictive maintenance scheduling
-- **Automated Workflows**: Automated workflows for equipment management and maintenance
+**Internal Communication:** Direct VPC networking within private subnets without service mesh due to stateless architecture.
 
 ## ECS-018: Observability Mechanisms
 
@@ -471,61 +436,6 @@ aws logs describe-log-groups --query 'logGroups[?contains(logGroupName, `valmeta
 - valmetal-prod-backend-api
 - valmetal-prod-web-client
 ```
-
-#### **IoT-Specific Monitoring and Observability**
-
-TODO: Is IoT monitoring required in this document?
-
-**AWS IoT Core Monitoring:**
-```bash
-# Monitor IoT device connectivity and message processing
-aws iot describe-thing-group --thing-group-name valmetal-farming-equipment
-
-# Output shows device group status:
-thingGroupName: valmetal-farming-equipment
-thingGroupProperties:
-  description: Farming equipment IoT devices for Valmetal platform
-  attributePayload:
-    attributes:
-      deviceType: farming-equipment
-      environment: production
-```
-
-**CloudWatch Metrics for IoT Integration:**
-- **Device Connectivity**: Connection status and device heartbeat monitoring
-- **Message Throughput**: MQTT message rates and processing latency
-- **Data Processing**: Timestream ingestion rates and query performance
-- **Error Rates**: Failed device connections and message processing errors
-- **Equipment Status**: Real-time farming equipment operational status
-
-#### **Multi-Environment and Scaling Monitoring**
-
-**Container-Level Observability:**
-
-TODO: Is this required in this document? Does it validate the requirements?```bash
-# Verify CloudWatch Container Insights configuration
-aws ecs describe-clusters \
-  --clusters valmetal-prod-backend-api \
-  --include INSIGHTS
-
-# Output shows Container Insights enabled:
-clusterName: valmetal-prod-backend-api
-settings:
-- name: containerInsights
-  value: enabled
-```
-
-**Environmental Monitoring:**
-- **Development Environment**: CloudWatch logs and metrics for testing IoT scenarios
-- **Staging Environment**: Full production-like monitoring for validation
-- **Production Environment**: Complete observability with real farming equipment data
-- **Cross-Account Visibility**: Centralized monitoring dashboard across all environments
-
-**Scaling Event Monitoring:**
-- **ECS Service Scaling**: Auto-scaling triggers and capacity changes logged
-- **Resource Utilization**: CPU, memory, and network metrics for scaling decisions
-- **IoT Load Balancing**: Device connection distribution and processing load monitoring
-- **Performance Optimization**: Response time and throughput optimization tracking
 
 ## ECS-019: Storage Options Selection
 
