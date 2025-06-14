@@ -24,11 +24,9 @@ This runbook covers operational procedures for:
 
 ---
 
-## Daily Operational Procedures
+## Health check routine
 
-### Morning Health Check (Daily 9:00 AM)
-
-**Objective:** Verify system health and identify any overnight issues requiring attention.
+**Objective:** Verify system health and identify any issues requiring attention.
 
 **Procedure:**
 1. **Review CloudWatch Dashboard**
@@ -55,9 +53,9 @@ This runbook covers operational procedures for:
      | sort count desc
      ```
 
-**Escalation:** Report any anomalies to development team via Slack #alerts channel.
+**Escalation:** Report any anomalies to development team via Slack project channel.
 
-### Weekly Capacity Planning Review (Fridays 2:00 PM)
+### Capacity Planning Review
 
 **Objective:** Analyze resource utilization trends and plan capacity adjustments.
 
@@ -126,7 +124,7 @@ This runbook covers operational procedures for:
 
 **Escalation:** If not resolved within 15 minutes, escalate to senior engineer and customer success manager.
 
-### Warning Alert Response (15-minute response window)
+### Warning Alert Response
 
 **Trigger Conditions:**
 - ECS CPU utilization >70%
@@ -157,7 +155,7 @@ This runbook covers operational procedures for:
    - Schedule follow-up capacity planning review
    - Document findings for trend analysis
 
-### Performance Alert Response (Hourly review)
+### Performance Alert Response
 
 **Trigger Conditions:**
 - Application response time >500ms
@@ -314,7 +312,7 @@ This runbook covers operational procedures for:
 
 1. **Detection and Acknowledgment**
    - Alert received via CloudWatch/SNS
-   - Incident acknowledged in monitoring system
+   - Incident acknowledged in alerting system (depends on each customer - e.g. PagerDuty)
    - Initial assessment and severity classification
 
 2. **Investigation and Diagnosis**
@@ -356,10 +354,6 @@ Prevention: {Actions taken to prevent recurrence}
 
 ## Routine Maintenance Procedures
 
-### Monthly Security Patching
-
-**Schedule:** First Saturday of each month, 2:00 AM - 6:00 AM
-
 **Procedure:**
 1. **Pre-maintenance Verification**
    - Verify backup completion for all databases
@@ -376,9 +370,7 @@ Prevention: {Actions taken to prevent recurrence}
    - Execute health check validation procedures
    - Monitor for 30 minutes post-deployment
 
-### Quarterly Disaster Recovery Testing
-
-**Schedule:** Last Friday of each quarter
+### Disaster Recovery Testing
 
 **Procedure:**
 1. **Database Backup Restoration Testing**
@@ -386,12 +378,7 @@ Prevention: {Actions taken to prevent recurrence}
    - Verify data integrity and application connectivity
    - Document restoration time and process
 
-2. **Cross-Region Failover Testing**
-   - Test load balancer failover mechanisms
-   - Verify DNS routing and certificate validity
-   - Validate monitoring and alerting in backup region
-
-3. **Recovery Documentation Update**
+2. **Recovery Documentation Update**
    - Update disaster recovery procedures based on test results
    - Review and update emergency contact information
    - Validate backup retention and recovery objectives
@@ -402,59 +389,25 @@ Prevention: {Actions taken to prevent recurrence}
 
 ### Internal Escalation Path
 
-**Level 1:** Operations Team Member
+**Level 1:** Project Team Leader
 - Initial response and basic troubleshooting
 - Escalation trigger: Unable to resolve within defined SLA
 
-**Level 2:** Senior Site Reliability Engineer
+**Level 2:** COO - Denis Brochu
 - Advanced troubleshooting and system analysis
 - Architecture and infrastructure modifications
 - Escalation trigger: Complex technical issues or extended outage
-
-**Level 3:** Engineering Manager + Customer Success Manager
-- Customer communication and business impact assessment
-- Resource allocation and vendor engagement decisions
-- Escalation trigger: Major incident or customer escalation
 
 ### Customer Communication
 
 **Proactive Communication Triggers:**
 - Any Severity 1 incident
-- Severity 2 incidents affecting >25% of users
 - Planned maintenance extending beyond scheduled window
 
 **Communication Channels:**
-- Email: Primary incident notifications
+- Alerting system (e.g. PagerDuty): Primary incident notifications
 - Slack: Real-time updates and internal coordination
 - Phone: Emergency escalation for critical incidents
-
-### Vendor Escalation
-
-**AWS Support Cases:**
-- Business Critical: Severity 1 incidents
-- Production System Impaired: Severity 2 incidents
-- Production System Down: Complete service outages
-
-**Third-party Services:**
-- Monitor SLA compliance for external dependencies
-- Escalate performance issues affecting customer experience
-- Coordinate maintenance windows with service providers
-
----
-
-## Documentation and Review
-
-### Runbook Maintenance
-
-**Monthly Review:**
-- Update procedures based on recent incidents
-- Validate contact information and escalation paths
-- Review and update troubleshooting scenarios
-
-**Quarterly Assessment:**
-- Analyze incident response effectiveness
-- Update SLA targets based on performance data
-- Training needs assessment for operations team
 
 ### Knowledge Management
 
@@ -462,52 +415,3 @@ Prevention: {Actions taken to prevent recurrence}
 - All incidents must be documented in incident tracking system
 - Post-mortem reports required for Severity 1 and 2 incidents
 - Knowledge base articles created for recurring issues
-
-**Training and Onboarding:**
-- New team member runbook orientation
-- Quarterly hands-on training sessions
-- Annual disaster recovery exercise participation
-
----
-
-## Appendix
-
-### Quick Reference - CloudWatch Logs Insights Queries
-
-**Error Analysis:**
-```
-fields @timestamp, @message, @requestId, @service
-| filter @level = "ERROR"
-| stats count() by @service
-| sort count desc
-```
-
-**Performance Analysis:**
-```
-fields @timestamp, ResponseTime, @requestId
-| filter @type = "access"
-| stats avg(ResponseTime), max(ResponseTime), count() by bin(5m)
-```
-
-**Security Event Monitoring:**
-```
-fields @timestamp, @message, @sourceIP
-| filter @message like /authentication failed/
-| stats count() by @sourceIP
-| sort count desc
-```
-
-### Emergency Contacts
-
-**Internal Team:**
-- Operations On-Call: +1-XXX-XXX-XXXX
-- Engineering Manager: +1-XXX-XXX-XXXX
-- Customer Success: +1-XXX-XXX-XXXX
-
-**External Vendors:**
-- AWS Support: Through AWS Console
-- Third-party Monitoring: support@vendor.com
-
----
-
-*This runbook is maintained by the Ingeno Operations Team and updated regularly to reflect current best practices and lessons learned from operational experience.*

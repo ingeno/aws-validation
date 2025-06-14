@@ -753,3 +753,46 @@ Ingeno enforces comprehensive data encryption for all customer environments usin
 - Key Rotation: Automatic annual rotation for AWS managed keys, scheduled rotation for customer-managed keys
 - Access Control: KMS key policies restrict access to authorized IAM roles and services only
 - Audit Logging: All key usage tracked through CloudTrail for security compliance
+
+## REL-001: Automate Deployment and Leverage Infrastructure-as-Code Tools
+
+### Response
+
+Ingeno implements fully automated deployment using GitHub Actions CI/CD pipelines with AWS CDK (Cloud Development Kit) for infrastructure-as-code. All production infrastructure is deployed programmatically without manual AWS Management Console operations.
+
+### Evidence
+
+**1. Automated Deployment Infrastructure:**
+
+All ACI-MTL production resources are deployed using automated CI/CD with the following CloudFormation through various stacks:
+
+- acimtl-prod-ses
+- acimtl-prod-bucket
+- acimtl-prod-web-client
+- acimtl-prod-web-admin
+- acimtl-prod-api
+- acimtl-prod-common-http
+- acimtl-prod-github
+- acimtl-prod-billing
+- acimtl-prod-auth
+- acimtl-prod-bastion
+- acimtl-prod-database
+- acimtl-prod-common-infrastructure
+
+**2. Infrastructure-as-Code Example Template:**
+
+*Reference: See `acimtl-prod-api-cloudformation-template.yaml` for complete CDK-generated CloudFormation template.*
+
+**3. GitHub Actions CI/CD Pipeline:**
+
+- **Automated Testing:** All code changes trigger automated linting, unit tests, and integration tests
+- **CDK Synthesis:** CloudFormation templates automatically generated from CDK TypeScript code
+- **Staged Deployment:** Changes deployed to testing environments before production
+- **Zero-Touch Production:** Production deployments triggered only after successful testing and peer review
+
+**4. No Manual Operations:**
+
+Manual infrastructure changes are prohibited via AWS Management Console or AWS CLI. Production deployments exclusively use:
+- GitHub Actions runners with Github OIDC with minimal permissions
+- CDK CLI for CloudFormation stack deployment and updates
+

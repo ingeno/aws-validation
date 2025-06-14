@@ -1,0 +1,254 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack for valmetal-prod-api - Generated from CDK
+Transform:
+- AWS::CodeDeployBlueGreen
+Resources:
+  EntityHierarchyTableprod538D8C02:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: deviceId
+        AttributeType: S
+      - AttributeName: hierarchyLevel
+        AttributeType: N
+      - AttributeName: parentId
+        AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: GSI1
+        KeySchema:
+        - AttributeName: parentId
+          KeyType: HASH
+        - AttributeName: hierarchyLevel
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      KeySchema:
+      - AttributeName: deviceId
+        KeyType: HASH
+      - AttributeName: hierarchyLevel
+        KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TableName: EntityHierarchy
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/EntityHierarchyTable-prod/Resource
+  entityHierarchyTableArnCF7E3D5A:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /valmetal/prod/api/entityHierarchyTableArn
+      Type: String
+      Value:
+        Fn::GetAtt:
+        - EntityHierarchyTableprod538D8C02
+        - Arn
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/entityHierarchyTableArn/Resource
+  valmetalStreamChangesToDeviceLambdaprodServiceRole56A7BC87:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - Fn::Join:
+        - ''
+        - - 'arn:'
+          - Ref: AWS::Partition
+          - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-StreamChangesToDeviceLambda-prod/ServiceRole/Resource
+  valmetalStreamChangesToDeviceLambdaprodServiceRoleDefaultPolicy6B5DB4B8:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource: arn:aws:logs:us-east-1:628892762446:*
+        - Action: iot:Publish
+          Effect: Allow
+          Resource: arn:aws:iot:us-east-1:628892762446:topic/*
+        - Action: dynamodb:ListStreams
+          Effect: Allow
+          Resource: '*'
+        - Action:
+          - dynamodb:DescribeStream
+          - dynamodb:GetRecords
+          - dynamodb:GetShardIterator
+          Effect: Allow
+          Resource:
+            Fn::GetAtt:
+            - EntityHierarchyTableprod538D8C02
+            - StreamArn
+        Version: '2012-10-17'
+      PolicyName: valmetalStreamChangesToDeviceLambdaprodServiceRoleDefaultPolicy6B5DB4B8
+      Roles:
+      - Ref: valmetalStreamChangesToDeviceLambdaprodServiceRole56A7BC87
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-StreamChangesToDeviceLambda-prod/ServiceRole/DefaultPolicy/Resource
+  valmetalStreamChangesToDeviceLambdaprodCB7118D4:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cdk-hnb659fds-assets-628892762446-us-east-1
+        S3Key: 0a878fe25cb31e39bf78d6e1539cdd9ac2537af12a3c4e66cd3239cfb1597fa4.zip
+      FunctionName: valmetal-StreamChangesToDeviceLambda-prod
+      Handler: ./src/index.handler
+      Role:
+        Fn::GetAtt:
+        - valmetalStreamChangesToDeviceLambdaprodServiceRole56A7BC87
+        - Arn
+      Runtime: nodejs20.x
+      Timeout: 60
+    DependsOn:
+    - valmetalStreamChangesToDeviceLambdaprodServiceRoleDefaultPolicy6B5DB4B8
+    - valmetalStreamChangesToDeviceLambdaprodServiceRole56A7BC87
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-StreamChangesToDeviceLambda-prod/Resource
+      aws:asset:path: asset.0a878fe25cb31e39bf78d6e1539cdd9ac2537af12a3c4e66cd3239cfb1597fa4
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  valmetalStreamChangesToDeviceLambdaprodDynamoDBEventSourcevalmetalprodapiEntityHierarchyTableprod3DDF1B46DFC21A4F:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 100
+      EventSourceArn:
+        Fn::GetAtt:
+        - EntityHierarchyTableprod538D8C02
+        - StreamArn
+      FunctionName:
+        Ref: valmetalStreamChangesToDeviceLambdaprodCB7118D4
+      StartingPosition: LATEST
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-StreamChangesToDeviceLambda-prod/DynamoDBEventSource:valmetalprodapiEntityHierarchyTableprod3DDF1B46/Resource
+  ModelMappingTableprodF165DECB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: Model
+        AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+      - AttributeName: Model
+        KeyType: HASH
+      TableName: ModelToDeviceTypeMapping
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/ModelMappingTable-prod/Resource
+  modelToDeviceTypeTableArn1C95521A:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /valmetal/prod/api/modelToDeviceTypeTableArn
+      Type: String
+      Value:
+        Fn::GetAtt:
+        - ModelMappingTableprodF165DECB
+        - Arn
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/modelToDeviceTypeTableArn/Resource
+  valmetalModelToTypeMappingLambdaprodServiceRole71D508A1:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+      - Fn::Join:
+        - ''
+        - - 'arn:'
+          - Ref: AWS::Partition
+          - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-ModelToTypeMappingLambda-prod/ServiceRole/Resource
+  valmetalModelToTypeMappingLambdaprodServiceRoleDefaultPolicy59F43C92:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource: arn:aws:logs:us-east-1:628892762446:*
+        - Action: dynamodb:Query
+          Effect: Allow
+          Resource:
+            Fn::GetAtt:
+            - ModelMappingTableprodF165DECB
+            - Arn
+        Version: '2012-10-17'
+      PolicyName: valmetalModelToTypeMappingLambdaprodServiceRoleDefaultPolicy59F43C92
+      Roles:
+      - Ref: valmetalModelToTypeMappingLambdaprodServiceRole71D508A1
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-ModelToTypeMappingLambda-prod/ServiceRole/DefaultPolicy/Resource
+  valmetalModelToTypeMappingLambdaprodE696B3C9:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: cdk-hnb659fds-assets-628892762446-us-east-1
+        S3Key: 98d6383965ed3353057e5d95af7a325cdc8e5eb54544836676a89becad6bfb96.zip
+      Environment:
+        Variables:
+          TABLE_NAME: ModelToDeviceTypeMapping
+      FunctionName: valmetal-ModelToTypeMappingLambda-prod
+      Handler: ./src/index.handler
+      Role:
+        Fn::GetAtt:
+        - valmetalModelToTypeMappingLambdaprodServiceRole71D508A1
+        - Arn
+      Runtime: nodejs20.x
+      Timeout: 60
+    DependsOn:
+    - valmetalModelToTypeMappingLambdaprodServiceRoleDefaultPolicy59F43C92
+    - valmetalModelToTypeMappingLambdaprodServiceRole71D508A1
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/valmetal-ModelToTypeMappingLambda-prod/Resource
+      aws:asset:path: asset.98d6383965ed3353057e5d95af7a325cdc8e5eb54544836676a89becad6bfb96
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  getModelToTypeMappingLambdaArnAA2F65D2:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /valmetal/prod/api/getModelToTypeMappingLambdaArn
+      Type: String
+      Value:
+        Fn::GetAtt:
+        - valmetalModelToTypeMappingLambdaprodE696B3C9
+        - Arn
+    Metadata:
+      aws:cdk:path: valmetal-prod-api/getModelToTypeMappingLambdaArn/Resource
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+Rules:
+  CheckBootstrapVersion:
+    Assertions:
+    - Assert:
+        Fn::Not:
+        - Fn::Contains:
+          - - '1'
+            - '2'
+            - '3'
+            - '4'
+            - '5'
+          - Ref: BootstrapVersion
+      AssertDescription: CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.

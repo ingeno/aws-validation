@@ -717,32 +717,77 @@ Ingeno enforces comprehensive data encryption for all customer environments usin
 
 ### Evidence
 
-**1. Standardized Data Encryption Policy:**
-
-*Reference: See `ingeno-data-encryption-policy.md` for complete encryption and key management policy.*
-
-**2. Valmetal IoT Platform Encryption Implementation:**
-
-**Internet-Facing Endpoints Encryption:**
-- **HTTPS Enforcement:** All public endpoints require TLS encryption via Application Load Balancer
-- **Certificate Management:** AWS Certificate Manager provides SSL/TLS certificates for HTTPS listeners
-- **Protocol Standards:** TLS 1.2 minimum with Perfect Forward Secrecy enabled
-- **HTTP to HTTPS Redirect:** Automatic redirection ensures all traffic uses encrypted connections
+**Internet-Facing Endpoints Encryption:** 
+- Public endpoints (Load balancers for UI and API) use HTTPS
+- AWS Certificate Manager provides SSL/TLS certificates for HTTPS listeners
+- Automatic redirection ensures all traffic uses encrypted connections
 
 **External API Communication Encryption:**
-- **Outbound HTTPS:** All external API calls use HTTPS/TLS 1.2 or higher through ECS services
-- **AWS SDK Encryption:** All AWS service communications automatically encrypted in transit
-- **Certificate Validation:** Enforced certificate validation for all outbound connections
+- All external API calls use HTTPS/TLS (mainly to invoke other AWS services)
+- AWS SDK Encryption: All AWS service communications automatically encrypted in transit
+- Certificate Validation: Enforced certificate validation for all outbound connections
 
 **Data at Rest Encryption:**
-- **RDS Database:** PostgreSQL database encrypted at rest using customer-managed KMS key `arn:aws:kms:us-east-1:628892762446:key/95c863e4-8572-4e22-a4eb-0a559f25db34`
-- **DynamoDB Tables:** All IoT data tables encrypted using AWS managed keys with AES-256 encryption
-- **Timestream Database:** Time-series data automatically encrypted at rest using AWS managed keys
-- **CloudWatch Logs:** Application logs and VPC flow logs encrypted using KMS keys
-- **ECS Fargate:** Container runtime and ephemeral storage encrypted using AWS Fargate platform encryption
+- RDS Database: PostgreSQL database encrypted at rest using customer-managed KMS key (e.g. for production : `arn:aws:kms:us-east-1:628892762446:key/95c863e4-8572-4e22-a4eb-0a559f25db34`) 
+- DynamoDB Tables: All IoT data tables encrypted using AWS managed keys with AES-256 encryption
+- Timestream Database: Time-series data automatically encrypted at rest using AWS managed keys
+- CloudWatch Logs: Application logs and VPC flow logs encrypted using KMS keys
+- ECS Fargate: Container runtime and ephemeral storage encrypted using AWS Fargate platform encryption
 
 **Key Management Implementation:**
-- **AWS KMS Integration:** Centralized key management with customer-managed keys for production databases
-- **Key Rotation:** Automatic annual rotation for AWS managed keys, scheduled rotation for customer-managed keys
-- **Access Control:** KMS key policies restrict access to authorized IAM roles and services only
-- **Audit Logging:** All key usage tracked through CloudTrail for security compliance
+- AWS KMS Integration: Centralized key management with customer-managed keys for production databases
+- Key Rotation: Automatic annual rotation for AWS managed keys, scheduled rotation for customer-managed keys
+- Access Control: KMS key policies restrict access to authorized IAM roles and services only
+- Audit Logging: All key usage tracked through CloudTrail for security compliance
+
+## REL-001: Automate Deployment and Leverage Infrastructure-as-Code Tools
+
+### Response
+
+Ingeno implements fully automated deployment using GitHub Actions CI/CD pipelines with AWS CDK (Cloud Development Kit) for infrastructure-as-code. All production infrastructure is deployed programmatically without manual AWS Management Console operations.
+
+### Evidence
+
+**1. Automated Deployment Infrastructure:**
+
+All Valmetal production resources are deployed using automated CI/CD with the following CloudFormation stacks:
+
+- valmetal-prod-cloudwatch-alarms
+- valmetal-prod-feed-sequence
+- valmetal-prod-feature-flags
+- valmetal-prod-web-client
+- valmetal-prod-billing
+- valmetal-prod-alarm
+- valmetal-prod-web-admin
+- valmetal-prod-backend-api
+- valmetal-prod-common-http
+- valmetal-prod-bastion
+- valmetal-prod-database
+- valmetal-prod-auth
+- valmetal-prod-logging
+- valmetal-prod-common-infrastructure
+- valmetal-prod-metrics
+- valmetal-prod-iot
+- valmetal-prod-provisioning
+- valmetal-prod-agent-provider
+- valmetal-prod-iot-prerequisites
+- valmetal-prod-api
+- valmetal-prod-plc-logger
+- valmetal-prod-github
+
+**2. Infrastructure-as-Code Example Template:**
+
+*Reference: See `valmetal-prod-api-cloudformation-template.yaml` for complete CDK-generated CloudFormation template.*
+
+**3. GitHub Actions CI/CD Pipeline:**
+
+- **Automated Testing:** All code changes trigger automated linting, unit tests, and integration tests
+- **CDK Synthesis:** CloudFormation templates automatically generated from CDK TypeScript code
+- **Staged Deployment:** Changes deployed to testing environments before production
+- **Zero-Touch Production:** Production deployments triggered only after successful testing and peer review
+
+**4. No Manual Console Operations:**
+
+Manual infrastructure changes are prohibited via AWS Management Console or AWS CLI. Production deployments exclusively use:
+- GitHub Actions runners with Github OIDC with minimal permissions
+- CDK CLI for CloudFormation stack deployment and updates
