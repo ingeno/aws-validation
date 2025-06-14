@@ -550,36 +550,7 @@ Ingeno implements comprehensive secure AWS account governance through documented
   - MFA implementation (Google Authenticator with 1Password integration)
   - Corporate contact information standards (role-based emails, corporate phone numbers)
   - CloudTrail configuration with multi-region coverage and log protection
-
-**2. Customer Implementation - Valmetal Account:**
-```yaml
-Valmetal Account Governance Implementation:
-  RootAccountSecurity:
-    AccessPolicy: "Emergency use only"
-    AuthorizedPersonnel: 3
-    MfaEnabled: true
-    MfaMethod: "Google Authenticator via 1Password"
-    UsageDocumentation: "All access logged with incident documentation"
-  
-  ContactInformation:
-    PrimaryContact: "Valmetal management account"
-    SecurityContact: "aws.valmetal.audit@ingeno.ca"
-    CorporatePhone: "1 844 446-4366"
-    ContactVerification: "Quarterly verification process"
-  
-  CloudTrailConfiguration:
-    Implementation: "AWS Control Tower automated setup"
-    Coverage: "All regions enabled in Control Tower governance"
-    TrailType: "Multi-region with global service events"
-    LogValidation: true
-    
-  LogProtection:
-    Architecture: "Dedicated Log Archive account"
-    S3BucketName: "aws-controltower-logs-[account-id]-[region]"
-    Encryption: "AES256-KMS with custom ControlTower key"
-    AccessControl: "Service Control Policies prevent unauthorized deletion"
-    BackupStrategy: "Cross-region replication enabled"
-```
+  - **Supporting Documentation:** Ingeno - AWS Landing Zone Provisioning.pdf - Complete SOP with step-by-step implementation procedures
 
 **3. Compliance Verification:**
 - Root account access restricted to emergency use with maximum 3 designated administrators
@@ -642,3 +613,17 @@ Ingeno implements comprehensive identity security best practices for accessing c
 - CloudTrail logging across all regions providing complete audit trail for all access activities
 - Centralized identity management through AWS IAM Identity Center eliminating local account creation
 - Regular access certification and privilege reviews conducted quarterly with documented remediation
+
+## OPE-001: Define, Monitor and Analyze Customer Workload Health KPIs
+
+### Response
+
+Ingeno implements comprehensive workload health monitoring through standardized CloudWatch dashboards, automated alerting systems, and structured application logging to ensure optimal system performance and rapid issue detection across all IoT platform components.
+
+Our monitoring strategy follows the **Ingeno Monitoring and Observability Framework** (documented in `ingeno-monitoring-summary.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
+
+### Evidence
+
+**1. Standardized Workload Health KPI Framework:**
+
+*Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*

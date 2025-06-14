@@ -365,7 +365,7 @@ aws ecs describe-services --cluster acimtl-prod-api --services acimtl-prod-api -
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not deploy on-premises or at edge locations using ECS-Anywhere (ECS-A).
 
 ## ECS-015: Ingress Control and Network Traffic Configuration
 
@@ -630,3 +630,17 @@ Ingeno implements comprehensive identity security best practices for accessing c
 - CloudTrail logging across all regions providing complete audit trail for all access activities
 - Centralized identity management through AWS IAM Identity Center eliminating local account creation
 - Regular access certification and privilege reviews conducted quarterly with documented remediation
+
+## OPE-001: Define, Monitor and Analyze Customer Workload Health KPIs
+
+### Response
+
+Ingeno implements comprehensive workload health monitoring through standardized CloudWatch dashboards, automated alerting systems, and structured application logging to ensure optimal system performance and rapid issue detection across all ECS-based workloads.
+
+Our monitoring strategy follows the **Ingeno Monitoring and Observability Framework** (documented in `ingeno-monitoring-summary.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
+
+### Evidence
+
+**1. Standardized Workload Health KPI Framework:**
+
+*Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document summarizes the security controls and procedures implemented for AWS root account management across all customer environments. These controls ensure proper governance, security, and compliance for root account usage in accordance with AWS security best practices.
+This document summarizes the security controls and procedures implemented for AWS root account management across all customer environments as defined in "Ingeno - AWS Landing Zone Provisioning.pdf". These controls ensure proper governance, security, and compliance for root account usage in accordance with AWS security best practices.
 
 ## Root Account Usage Policy
 

@@ -155,15 +155,10 @@ Root Organization
 
 ## Evidence Documents
 
-### 1. Security Engagement SOP
-The complete [AWS Landing Zone Provisioning Guide](https://docs.google.com/document/d/1zXsGmOj8kVbkEh-kJNkz5WJsaoq_5SmgHeNPCf-d_5M/edit) serves as the comprehensive Standard Operating Procedure that includes:
+The complete "Ingeno - AWS Landing Zone Provisioning.pdf" serves as the comprehensive Standard Operating Procedure that includes:
 
 - **Identity Federation Setup:** Detailed SAML configuration with Google Workspace
 - **IAM Role Configuration:** Step-by-step permission set creation
 - **Security Control Implementation:** MFA, CloudTrail, and monitoring setup
 - **Access Management Procedures:** User provisioning and group assignment processes
 - **Compliance Requirements:** CIS Benchmark and AWS Security Best Practices implementation
-
-### 2. Customer Implementation Example Requirements
-
-TODO

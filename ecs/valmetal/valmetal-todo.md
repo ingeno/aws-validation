@@ -86,3 +86,15 @@ const otherCluster = new ecs.Cluster(this, 'OtherCluster', {
 - Adding this to CDK ensures future deployments maintain Container Insights configuration
 - Provides individual app/container level metrics required for ECS-018 compliance
 - Enables detailed CloudWatch metrics and logs for task-level observability
+
+## OPE-001: Define, monitor and analyze customer workload health KPIs
+
+### Required Changes (Observability Enhancement)
+
+Update CDK stacks to implement CloudWatch dashboards for comprehensive monitoring:
+
+- CloudWatch dashboards implemented for comprehensive monitoring
+- Key metrics monitored include CPU utilization, memory usage, and service health
+- Alarm thresholds configured for critical metrics
+- Regular review of operational metrics
+- for IoT : https://aws.amazon.com/blogs/iot/monitoring-your-iot-fleet-using-cloudwatch/

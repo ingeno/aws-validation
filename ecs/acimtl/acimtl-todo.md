@@ -173,3 +173,15 @@ const otherCluster = new ecs.Cluster(this, 'OtherCluster', {
 ### Summary
 
 This is a lightweight addition to your existing, well-implemented version tracking system. You already have the hard part (Git SHA traceability) working perfectly - you just need to expose it through formal AWS tags and enable propagation for full compliance.
+
+## OPE-001: Define, monitor and analyze customer workload health KPIs
+
+### Required Changes (Observability Enhancement)
+
+Update CDK stacks to implement CloudWatch dashboards for comprehensive monitoring:
+
+- CloudWatch dashboards implemented for comprehensive monitoring
+- Key metrics monitored include CPU utilization, memory usage, and service health
+- Alarm thresholds configured for critical metrics
+- Regular review of operational metrics
+

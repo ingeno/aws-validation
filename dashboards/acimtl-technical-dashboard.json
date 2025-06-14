@@ -1,0 +1,110 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/ECS", "CPUUtilization", "ServiceName", "acimtl-prod-api", "ClusterName", "acimtl-prod-api" ],
+          [ ".", "MemoryUtilization", ".", ".", ".", "." ],
+          [ ".", "RunningTaskCount", ".", ".", ".", "." ],
+          [ ".", "PendingTaskCount", ".", ".", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "ca-central-1",
+        "title": "ECS Service Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "acimtl-prod-database" ],
+          [ ".", "DatabaseConnections", ".", "." ],
+          [ ".", "FreeableMemory", ".", "." ],
+          [ ".", "FreeStorageSpace", ".", "." ],
+          [ ".", "ReadLatency", ".", "." ],
+          [ ".", "WriteLatency", ".", "." ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "ca-central-1",
+        "title": "Database Performance",
+        "period": 300
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "app/acimtl-AutoS-4su0rFZIJAwg/3b4e3fc90e2d3262", { "stat": "Sum" } ],
+          [ ".", "TargetResponseTime", ".", "." ],
+          [ ".", "HTTPCode_Target_2XX_Count", ".", ".", { "stat": "Sum" } ],
+          [ ".", "HTTPCode_Target_4XX_Count", ".", ".", { "stat": "Sum" } ],
+          [ ".", "HTTPCode_Target_5XX_Count", ".", ".", { "stat": "Sum" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "ca-central-1",
+        "title": "Load Balancer Metrics",
+        "period": 300
+      }
+    },
+    {
+      "type": "log",
+      "x": 0,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "query": "SOURCE '/ecs/acimtl-prod-api'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 50",
+        "region": "ca-central-1",
+        "title": "Recent Application Errors",
+        "view": "table"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 12,
+      "height": 6,
+      "properties": {
+        "metrics": [
+          [ "AWS/ECS", "CPUUtilization", "ServiceName", "acimtl-prod-api", "ClusterName", "acimtl-prod-api", { "stat": "Average" } ],
+          [ ".", "MemoryUtilization", ".", ".", ".", ".", { "stat": "Average" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "ca-central-1",
+        "title": "Resource Utilization Trends",
+        "period": 3600,
+        "annotations": {
+          "horizontal": [
+            {
+              "label": "CPU Alert Threshold",
+              "value": 85
+            },
+            {
+              "label": "Memory Alert Threshold", 
+              "value": 90
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
