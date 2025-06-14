@@ -16,29 +16,13 @@ The platform demonstrates production-grade container orchestration with automate
 
 The complete ACI-MTL application is containerized and deployed on Amazon ECS.
 
-There are 2 components on ECS:
-
-1. **Frontend (web app)**
-   - SSR frontend running on containers
-
-2. **Backend API**
-   - Core business logic
-   - API for web application frontend
-   - Integration with other systems
-
-The backend service runs on Amazon ECS and handles all core business logic. The service processes requests to serve the UI and interacts with other AWS services including RDS database and S3 for document storage.
+**Components deployed to Amazon ECS:**
+1. **Frontend (web app)** - SSR frontend running on containers
+2. **Backend API** - Core business logic and API for web application frontend
 
 ### Evidence
 
-#### List Clusters
 ```bash
-# List clusters
-> aws ecs list-clusters
-
-clusterArns:
-- arn:aws:ecs:ca-central-1:484907525335:cluster/acimtl-prod-web-client
-- arn:aws:ecs:ca-central-1:484907525335:cluster/acimtl-prod-api
-
 # List tasks for web client
 > aws ecs list-tasks --cluster acimtl-prod-web-client
 
@@ -52,48 +36,31 @@ taskArns:
 - arn:aws:ecs:ca-central-1:484907525335:task/acimtl-prod-api/09d11cc6e2454d5e8b16ee472ea5eaaf
 ```
 
-## ECS-002
+## ECS-002: Changes to Infrastructure and Workloads are Deployed in an Automated Way
 
-Infrastructure as code tooling: AWS CDK (TypeScript)
-Description of the tools used for automated deployment:
+### Response
 
-AWS CDK for infrastructure provisioning and ECS service management
-GitHub Actions for CI/CD pipeline orchestration
-Docker for containerized application builds
-Amazon ECR for container image storage and versioning
+**Infrastructure as Code Tooling:** AWS CDK (TypeScript) for infrastructure provisioning and ECS service management
 
-Description of deployment process and rollback procedures:
+**Automated Deployment Tools:** 
+- GitHub Actions for CI/CD pipeline orchestration
+- Docker for containerized application builds
+- Amazon ECR for container image storage and versioning
 
-Developer commits code changes to feature branch in GitHub (Pull Request)
-  - Pull request triggers code review and automated testing pipeline
+**Deployment Process:** 
+Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Developer commits in main branch trigger GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
 
-Upon merge to main branch, GitHub Actions workflow initiates:
-  - Automated linting, unit tests, component tests, and end-to-end tests
-  - Container images built and tagged with Git commit SHA
-  - Images pushed to Amazon ECR
-  - CDK deploys infrastructure changes to staging environment (replica of production)
-  - Automated health checks validate staging deployment functionality
-  - If staging validation passes, production deployment begins with ECS service updates
-  - Post-deployment health monitoring with CloudWatch alarms
-  - Automatic rollback triggered if health checks fail or monitoring indicates issues
+**Rollback Procedures:** 
+Automatic rollback triggered by health check failures and CloudWatch alarms during deployment. Previous task definition versions remain available for rollback procedures.
 
-Rollback procedures:
+**Source Repository:** 
+GitHub repository with branch protection policies requiring code reviews. Infrastructure code, ECS task definitions, and application configuration stored under version control.
 
-- Automated health checks post-deployment assess service health metrics
-- Automatic rollback triggered if health checks fail within monitoring window
-- CloudWatch alarms monitored during deployment to detect anomalies
-- Previous task definition versions remain available for rollback
-- Manual rollback procedures available for emergency situations
+**Version Control System:** 
+Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
 
-Description of source repository that stores infrastructure and task definition files:
-- GitHub repository with branch protection policies requiring code reviews. All infrastructure code, ECS task definitions, and application configuration stored under version control.
-
-Version control system used to manage technical artifacts:
-- Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
-
-Description of CI/CD tooling to automate updates to underlying workloads:
-- GitHub Actions workflows orchestrate the deployment pipeline, integrating with AWS services to automate ECS task definition updates and service deployments. Zero manual changes permitted in production environment - all modifications flow through the version-controlled Infrastructure deployment pipeline."
-
+**CI/CD Tooling:** 
+GitHub Actions workflows integrate with AWS services to automate ECS task definition updates and service deployments. All production changes flow through the version-controlled deployment pipeline with zero manual changes permitted.
 
 ## ECS-003: Task Definition Families for Singular Business Purpose
 
@@ -535,57 +502,27 @@ The current ACI-MTL platform architecture prioritizes **reliability over cost op
 
 ### Response
 
-The ACI-MTL platform implements a **multi-cluster architecture** with separate ECS clusters for API and Web Client services, providing resource isolation and independent deployment pipelines. All clusters are uniformly provisioned and managed using AWS CDK (TypeScript) for consistent infrastructure-as-code deployment across environments and accounts.
-
-### Multi-Cluster Strategy
-
-#### **Cluster Separation Rationale**
-- **Resource Isolation**: Separate clusters prevent resource contention between API backend and web frontend
-- **Independent Scaling**: Each cluster can scale independently based on workload characteristics
-- **Deployment Independence**: API and Web Client can be deployed separately without affecting each other
-- **Security Boundaries**: Isolated clusters provide additional security segmentation
-
-#### **Cluster Configuration**
-- **API Cluster**: `acimtl-prod-api` - Handles backend API requests and database operations
-- **Web Client Cluster**: `acimtl-prod-web-client` - Manages frontend web application serving
-- **Environment Consistency**: Same cluster architecture replicated across all environments (dev, staging, prod)
+The ACI-MTL platform uses **AWS CDK (TypeScript)** for multi-cluster management with consistent configuration across environments.
 
 ### Evidence
 
-#### **Infrastructure as Code Tool**
+#### **Infrastructure as Code Tool for Multi-Cluster Deployment**
 
-**AWS CDK (TypeScript) for Uniform Cluster Management:**
-- **Tool**: AWS CDK (Cloud Development Kit) using TypeScript
-- **Deployment**: Consistent cluster provisioning across all environments and accounts
-- **Configuration Management**: Infrastructure-as-code templates ensure identical cluster setup
-- **Cross-Account Support**: CDK manages deployments to dev, staging, and prod accounts
+**AWS CDK (TypeScript)** is used to define and deploy all Amazon ECS clusters with consistent configuration. The same stacks with appropriate parameters are used for all environments (development, staging, production).
 
 #### **Multi-Cluster Management Tool**
 
-**CDK-Based Multi-Cluster Strategy:**
-- **Centralized Management**: Single CDK codebase manages all clusters across environments
-- **Environment Parameterization**: CDK stacks accept environment parameters for account-specific deployments
-- **Consistent Architecture**: Same cluster pattern (API + Web Client) replicated across all accounts
-- **Version Control**: All infrastructure changes tracked and reviewable through Git
+**CDK-Based Multi-Cluster Management:** AWS CDK manages multiple ECS clusters with consistent configuration across environments.
 
-#### **Multi-Account Mapping**
+#### **Multi-Account Environment Mapping**
 
-**Multi-Account, Multi-Cluster Architecture:**
-- **Environment Isolation**: Each environment deployed to a distinct AWS account for complete resource isolation
-- **Account Structure**: 
-  - **Dev Account**: Test environment with 2 clusters (API + Frontend)
-  - **Staging Account**: Test environment with 2 clusters (API + Frontend) 
-  - **Prod Account**: Production environment with 2 clusters (API + Frontend)
-- **Cluster Pattern**: Each account contains exactly 2 ECS clusters (`-api` and `-web-client`)
-- **CDK Cross-Account Deployment**: CDK manages deployments across all accounts with consistent cluster configurations
+**Account Structure:**
 
-**Multi-Account Benefits:**
-- **Complete Environment Isolation**: Dev, staging, and prod environments cannot interfere with each other
-- **Security Boundaries**: Account-level IAM policies provide maximum security separation
-- **Cost Allocation**: Clear cost separation by environment through account-level billing
-- **Compliance**: Account isolation supports regulatory requirements for environment separation
-
-This multi-cluster architecture ensures reliable service isolation while maintaining consistent infrastructure management through automated CDK deployments.
+- **Development Account**: `339713169203` - Isolated development and testing clusters
+- **Staging Account**: `911167913296` - Pre-production validation with production-like configuration (replica of production)  
+- **Production Account**: `484907525335` - Live ACI-MTL application clusters
+- **Shared Account**: `471112604643` - ECR repositories
+- **Cross-Account Access**: CDK deployment roles is granted to Github CI/CD pipeline based on which environment is being deployed to.
 
 ## ECS-010: Container Image Scanning and Security
 
@@ -846,7 +783,7 @@ The ACI-MTL platform secures access to persistent storage (RDS and S3) through *
 
 ### Response
 
-**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively** and does not use EBS volumes for container data persistence. EBS volumes are not supported with Fargate launch type.
+**Not Applicable** - The ACI-MTL platform uses **AWS Fargate exclusively**, and EBS volumes are not supported with Fargate launch type.
 
 ## ECS-023: Multi-Tenant Workloads
 

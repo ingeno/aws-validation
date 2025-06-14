@@ -16,32 +16,13 @@ The platform demonstrates production-grade container orchestration with automate
 
 The complete Valmetal application is containerized and deployed on Amazon ECS.
 
-There are 2 components on ECS:
-
-1. **Frontend (web applications)**
-   - **Admin Web App**: Administrative interface for farming equipment management
-   - **Client Web App**: Primary client interface for equipment monitoring
-   - **Client PWA**: Progressive web application for mobile access
-
-2. **Backend API**
-   - Core business logic and API endpoints
-   - IoT data processing and equipment management
-   - Integration with farming equipment via AWS IoT Core
-   - Data pipeline orchestration for real-time monitoring
-
-The backend service runs on Amazon ECS and handles all core business logic including IoT data ingestion, processing, and storage. The service processes requests to serve multiple UI applications and integrates with AWS services including RDS, DynamoDB, Timestream for data storage, and S3 for file management. The platform connects to farming equipment through AWS IoT Core for real-time equipment monitoring and control.
+**Components deployed to Amazon ECS:**
+1. **Frontend (web applications)** - Admin Web App, Client Web App, Client PWA
+2. **Backend API** - Core business logic and API endpoints
 
 ### Evidence
 
-#### List Clusters
 ```bash
-# List clusters
-aws ecs list-clusters
-
-clusterArns:
-- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-backend-api
-- arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-web-client
-
 # List tasks for web client
 aws ecs list-tasks --cluster valmetal-prod-web-client
 
@@ -55,47 +36,31 @@ taskArns:
 - arn:aws:ecs:us-east-1:628892762446:task/valmetal-prod-backend-api/9c9fbdab99cd4d6fa5327283f51ab38f
 ```
 
-## ECS-002
+## ECS-002: Changes to Infrastructure and Workloads are Deployed in an Automated Way
 
-Infrastructure as code tooling: AWS CDK (TypeScript)
-Description of the tools used for automated deployment:
+### Response
 
-AWS CDK for infrastructure provisioning and ECS service management
-GitHub Actions for CI/CD pipeline orchestration
-Docker for containerized application builds
-Amazon ECR for container image storage and versioning
+**Infrastructure as Code Tooling:** AWS CDK (TypeScript) for infrastructure provisioning and ECS service management
 
-Description of deployment process and rollback procedures:
+**Automated Deployment Tools:** 
+- GitHub Actions for CI/CD pipeline orchestration
+- Docker for containerized application builds
+- Amazon ECR for container image storage and versioning
 
-Developer commits code changes to feature branch in GitHub (Pull Request)
-  - Pull request triggers code review and automated testing pipeline
+**Deployment Process:** 
+Pull requests trigger code review and automated testing pipeline (linting, unit tests, component tests, end-to-end tests). Developer commits in main branch trigger GitHub Actions workflow that builds container images tagged with Git commit SHA, pushes to ECR, deploys to staging environment via CDK with automated health checks for validation, and upon staging validation, deploys to production with ECS service updates.
 
-Upon merge to main branch, GitHub Actions workflow initiates:
-  - Automated linting, unit tests, component tests, and end-to-end tests
-  - Container images built and tagged with Git commit SHA
-  - Images pushed to Amazon ECR
-  - CDK deploys infrastructure changes to staging environment (replica of production)
-  - Automated health checks validate staging deployment functionality
-  - If staging validation passes, production deployment begins with ECS service updates
-  - Post-deployment health monitoring with CloudWatch alarms
-  - Automatic rollback triggered if health checks fail or monitoring indicates issues
+**Rollback Procedures:** 
+Automatic rollback triggered by health check failures and CloudWatch alarms during deployment. Previous task definition versions remain available for rollback procedures.
 
-Rollback procedures:
+**Source Repository:** 
+GitHub repository with branch protection policies requiring code reviews. Infrastructure code, ECS task definitions, and application configuration stored under version control.
 
-- Automated health checks post-deployment assess service health metrics
-- Automatic rollback triggered if health checks fail within monitoring window
-- CloudWatch alarms monitored during deployment to detect anomalies
-- Previous task definition versions remain available for rollback
-- Manual rollback procedures available for emergency situations
+**Version Control System:** 
+Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
 
-Description of source repository that stores infrastructure and task definition files:
-- GitHub repository with branch protection policies requiring code reviews. All infrastructure code, ECS task definitions, and application configuration stored under version control.
-
-Version control system used to manage technical artifacts:
-- Git with container image tags corresponding to Git commit SHAs, ensuring traceability from code commit to deployed infrastructure.
-
-Description of CI/CD tooling to automate updates to underlying workloads:
-- GitHub Actions workflows orchestrate the deployment pipeline, integrating with AWS services to automate ECS task definition updates and service deployments. Zero manual changes permitted in production environment - all modifications flow through the version-controlled Infrastructure deployment pipeline.
+**CI/CD Tooling:** 
+GitHub Actions workflows integrate with AWS services to automate ECS task definition updates and service deployments. All production changes flow through the version-controlled deployment pipeline with zero manual changes permitted.
 
 ## ECS-003: Task Definition Families for Singular Business Purpose
 
@@ -470,7 +435,7 @@ The Valmetal platform uses **AWS CDK (TypeScript)** for multi-cluster management
 
 #### **Infrastructure as Code Tool for Multi-Cluster Deployment**
 
-**AWS CDK (TypeScript)** is used to define and deploy all Amazon ECS clusters with consistent configuration.
+**AWS CDK (TypeScript)** is used to define and deploy all Amazon ECS clusters with consistent configuration. The same stacks with appropriate parameters are used for all environments (development, staging, production).
 
 #### **Multi-Cluster Management Tool**
 
@@ -479,22 +444,12 @@ The Valmetal platform uses **AWS CDK (TypeScript)** for multi-cluster management
 #### **Multi-Account Environment Mapping**
 
 **Account Structure:**
-```bash
-# Production account verification
-aws sts get-caller-identity --query 'Account'
-# Output: "628892762446"
 
-aws ecs list-clusters --query 'clusterArns'
-# Output:
-[
-  "arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-backend-api",
-  "arn:aws:ecs:us-east-1:628892762446:cluster/valmetal-prod-web-client"
-]
-```
-
-**Account Mapping:**
-- **Production Account**: `628892762446` - ECS clusters and services
-- **Shared Infrastructure Account**: `497409020770` - ECR repositories
+- **Development Account**: `410308623475` - Isolated development and testing clusters
+- **Staging Account**: `475448362599` - Pre-production validation with production-like configuration (replica of production)  
+- **Production Account**: `628892762446` - Live farming equipment management clusters
+- **Shared Account**: `497409020770` - ECR repositories
+- **Cross-Account Access**: CDK deployment roles is granted to Github CI/CD pipeline based on which environment is being deployed to.
 
 ## ECS-010: Container Image Scanning and Security
 
@@ -568,6 +523,8 @@ The Valmetal platform leverages **AWS Fargate's built-in runtime security protec
 - **Host Isolation**: Complete isolation between containers and underlying host OS
 
 #### **Active Protection Evidence**
+
+TODO : is platformVersion 1.4.0 enough ? Why not LATEST?
 
 **Fargate Security Boundaries:**
 ```bash
@@ -808,6 +765,8 @@ aws logs describe-log-groups --query 'logGroups[?contains(logGroupName, `valmeta
 
 #### **IoT-Specific Monitoring and Observability**
 
+TODO: Is IoT monitoring required in this document?
+
 **AWS IoT Core Monitoring:**
 ```bash
 # Monitor IoT device connectivity and message processing
@@ -834,7 +793,7 @@ thingGroupProperties:
 
 **Container-Level Observability:**
 
-```bash
+TODO: Is this required in this document? Does it validate the requirements?```bash
 # Verify CloudWatch Container Insights configuration
 aws ecs describe-clusters \
   --clusters valmetal-prod-backend-api \
