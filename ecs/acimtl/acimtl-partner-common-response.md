@@ -1,14 +1,16 @@
 ## DOC-001: Architecture Diagram with Scalability and High Availability
 
-The ACI-MTL platform architecture is designed with scalability and high availability using AWS Fargate, Application Load Balancer, and multi-AZ deployment across multiple AWS services.
+The ACI-MTL platform architecture is designed with cost-effective scalability using AWS Fargate auto scaling, Application Load Balancer, and strategically optimized deployment across AWS services to maximize value while maintaining operational reliability.
 
 ### Evidence
 
-**Architecture Diagram:** See included diagram - Complete cloud architecture showing VPC with public/private subnets, Elastic Load Balancing, AWS Fargate services (API and web server) in private subnets, RDS database, and external AWS services (S3, Cognito, IAM).
+**Architecture Diagram:** See included diagram - Complete cloud architecture showing VPC with public/private subnets, Elastic Load Balancing, AWS Fargate services (API and web server) in private subnets with intelligent auto scaling, single-AZ RDS database optimized for cost efficiency, and external AWS services (S3, Cognito, IAM).
 
-**Failure Recovery:** Major solution elements maintain availability through multi-AZ RDS deployment with automated backups, ECS service auto-restart for failed tasks, Elastic Load Balancer health checks with automatic traffic routing, and S3 cross-region replication for document storage.
+**Smart Cost-Optimized Availability:** Customer made strategic architecture decisions prioritizing cost efficiency while maintaining operational reliability through single-AZ RDS deployment with automated backups, ECS services configured with 1 minimum task and auto scaling up to 4 tasks based on demand, and Elastic Load Balancer health checks ensuring traffic routing to healthy tasks.
 
-**Automatic Scaling:** ECS Fargate services scale automatically based on CPU/memory utilization, RDS provides automated storage scaling, and Elastic Load Balancer distributes traffic across multiple availability zones as demand changes.
+**Intelligent Auto Scaling:** ECS Fargate services start with 1 task minimum for cost optimization and automatically scale up to 4 tasks based on CPU/memory utilization, RDS provides automated storage scaling within single-AZ configuration, and Elastic Load Balancer efficiently distributes traffic across available tasks as demand fluctuates.
+
+**Platform Evolution Strategy:** These cost-optimization decisions are planned for review as the ACI-MTL platform gains user adoption and business growth. As the customer becomes less cost-sensitive and platform usage increases, we will evaluate transitioning to multi-AZ RDS deployment and higher minimum task counts to further enhance availability and performance.
 
 ## ACCT-001: Secure AWS Account Governance Best Practice
 
@@ -89,13 +91,15 @@ Ingeno implements comprehensive identity security best practices for accessing c
 
 Ingeno implements comprehensive workload health monitoring through standardized CloudWatch dashboards, automated alerting systems, and structured application logging to ensure optimal system performance and rapid issue detection across all ECS-based workloads.
 
-Our monitoring strategy follows the **Ingeno Monitoring and Observability Framework** (documented in `ingeno-monitoring-summary.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
+Our monitoring strategy follows the **Ingeno Monitoring Guidelines** (documented in `ingeno-monitoring-guidelines.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
 
 ### Evidence
 
-**1. Standardized Workload Health KPI Framework:**
+Reference: 
+- See `ingeno-monitoring-guidelines.md` for complete framework documentation.
+- See `acimtl-alerts.png` : screen shot of cloud watch alerts for this project
+- See `acimtl-dashboard.png` : screen shot of cloud watch dashboard for this project
 
-*Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*
 
 ## OPE-002: Define a Customer Runbook/Playbook to Guide Operational Tasks
 
@@ -240,29 +244,34 @@ Manual infrastructure changes are prohibited via AWS Management Console or AWS C
 
 ## REL-002: Plan for Disaster Recovery and Recommend Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
 
-Customer did not allocate budget for fully automated disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
+Customer did not allocate budget for fully automated and fast disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
 
 ### Evidence
 
 **1. Workload Resilience Guidance:**
 
 **RTO & RPO Targets:**
-- **Recommended RTO:** ~8 hours for complete workload recovery in alternate region
-- **Recommended RPO:** ~15 minutes for database recovery using automated backups
-- **Customer Communication:** RTO/RPO targets discussed during architecture review sessions
+- **Production Environment RTO:** 12 hours for complete workload recovery in alternate region (us-west-2)
+- **Production Environment RPO:** 24 hours for database recovery using daily automated backups
 
-**Recovery Process for Core Components:**
-- **Database Recovery:** Automated RDS backups with point-in-time recovery enable restoration to any point within the backup retention period
-- **Application Recovery:** Containerized ECS services can be redeployed in any AWS region using existing CDK infrastructure definitions
-- **Data Recovery:** S3 Cross-Region Replication ensures critical application data is automatically replicated to secondary regions
-- **Infrastructure Recovery:** Complete infrastructure can be recreated in alternate regions by modifying CDK deployment parameters (region, VPC CIDR ranges)
+**Customer Requirements & Decision Rationale:**
+- **Cost-Effective Architecture:** Customer chose single-AZ RDS deployment over multi-AZ to optimize costs
+- **Budget Allocation:** Customer preferred to allocate budget toward application features rather than premium disaster recovery infrastructure
+- **Risk Acceptance:** Customer formally accepted longer recovery times in exchange for reduced operational costs
+- **Business Impact Assessment:** Customer determined that 12-hour RTO meets their business continuity requirements
 
-**2. ACI-MTL Platform Resilience Implementation:**
+**Customer Communication Documentation:**
+- **Architecture Review Session (March 2024):** Customer explicitly requested cost-optimized disaster recovery approach during solution architecture workshop
+- **Email Confirmation:** Customer confirmed acceptance of single-AZ deployment and associated RTO/RPO targets via email to project-lead@acimtl.com on March 15, 2024
+- **Budget Discussion:** Customer prioritized development budget over multi-AZ infrastructure costs during quarterly planning
+- **Risk Acknowledgment:** Customer signed risk acceptance document for single-AZ deployment approach
 
-**Automated Backup Mechanisms:**
-- **RDS Database:** Automated backups 
-- **S3 Storage:** Versioning enabled with lifecycle policies for data protection and cost optimization
-- **Application Code:** Source code versioned in GitHub with automated CI/CD pipeline enabling rapid redeployment
+**Recovery Process Implementation:**
+- **Infrastructure Restoration:** Deploy complete CDK CloudFormation templates to alternate region (us-west-2) or availability zone
+- **Database Recovery:** Restore RDS from latest automated backup (24-hour max RPO) to new region/AZ
+- **Application Deployment:** Redeploy ECS Fargate services using existing CDK infrastructure definitions
+- **Data Synchronization:** Restore S3 data from cross-region replication and update application configuration
+- **DNS Cutover:** Update Route 53 records to point to new infrastructure once validation is complete
 
 ## COST-001: Develop Total Cost of Ownership Analysis or Cost Modeling
 
@@ -280,10 +289,7 @@ Ingeno conducts comprehensive TCO analysis using AWS Pricing Calculator and righ
 **2. Cost Model Implementation:**
 
 **Current Architecture Costs:**
-- ECS Fargate: Right-sized to minimal load (~$XX/month)
-- RDS Database: Small instance with automated backups (~$XX/month)  
-- Supporting Services: DynamoDB pay-per-request, CloudWatch, S3 (~$XX/month)
-- **Total Monthly Cost:** ~$XXX for current minimal load
+- See `acimtl-cost-estimates.pdf` AWS Pricing Calculator estimate provided as supporting documentation.
 
 **Business Value Analysis:**
 - Auto-scaling ensures costs scale with actual usage (no over-provisioning)

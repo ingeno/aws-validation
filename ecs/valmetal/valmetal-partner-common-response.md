@@ -1,14 +1,16 @@
 ## DOC-001: Architecture Diagram with Scalability and High Availability
 
-The Valmetal platform architecture is designed with scalability and high availability using AWS Fargate, Application Load Balancer, and multi-AZ deployment across multiple AWS services.
+The Valmetal IoT platform architecture is designed with cost-effective scalability using AWS Fargate auto scaling, Application Load Balancer, and strategically optimized deployment across AWS services to maximize operational value while maintaining industrial reliability.
 
 ### Evidence
 
-**Architecture Diagram:** See included diagram - Complete farm-to-cloud architecture showing edge computing (PLC with Node-RED, Agent), IoT data ingestion (IoT Core, Device Shadow), processing pipeline (ECS Fargate, Lambda, Step Functions), and storage services (RDS multi-AZ, DynamoDB, Timestream, S3).
+**Architecture Diagram:** See included diagram - Complete farm-to-cloud architecture showing edge computing (PLC with Node-RED, Agent), IoT data ingestion (IoT Core, Device Shadow), processing pipeline (ECS Fargate with intelligent auto scaling, Lambda, Step Functions), and storage services (single-AZ RDS optimized for cost efficiency, DynamoDB, Timestream, S3).
 
-**Failure Recovery:** Major solution elements maintain availability through multi-AZ RDS deployment with automated backups, ECS service auto-restart for failed tasks, IoT Core device shadow for edge resilience, and S3 cross-region replication for critical data.
+**Smart Cost-Optimized Industrial Reliability:** Customer made strategic architecture decisions prioritizing cost efficiency while maintaining industrial-grade operational reliability through single-AZ RDS deployment with automated backups, ECS services configured with 1 minimum task and auto scaling up to 4 tasks based on IoT data processing demand, IoT Core device shadow for edge resilience, and S3 cross-region replication for critical industrial data.
 
-**Automatic Scaling:** ECS Fargate services scale automatically based on CPU/memory utilization, DynamoDB scales on-demand for IoT device states, Timestream provides automatic scaling for sensor data, and Application Load Balancer distributes traffic across multiple availability zones as demand changes.
+**Intelligent Auto Scaling for IoT Workloads:** ECS Fargate services start with 1 task minimum for cost optimization and automatically scale up to 4 tasks based on CPU/memory utilization and IoT data throughput, DynamoDB scales on-demand for IoT device states, Timestream provides automatic scaling for sensor data ingestion, and Application Load Balancer efficiently distributes traffic across available tasks as industrial data demand fluctuates.
+
+**Platform Evolution Strategy:** These cost-optimization decisions are planned for review as the Valmetal IoT platform gains industrial adoption and demonstrates business value. As the customer becomes less cost-sensitive and IoT device deployment scales across additional facilities, we will evaluate transitioning to multi-AZ RDS deployment and higher minimum task counts to further enhance industrial reliability and performance.
 
 ## ACCT-001: Secure AWS Account Governance Best Practice
 
@@ -86,15 +88,14 @@ Ingeno implements comprehensive identity security best practices for accessing c
 
 ## OPE-001: Define, Monitor and Analyze Customer Workload Health KPIs
 
-Ingeno implements comprehensive workload health monitoring through standardized CloudWatch dashboards, automated alerting systems, and structured application logging to ensure optimal system performance and rapid issue detection across all IoT platform components.
+Ingeno implements comprehensive workload health monitoring through standardized CloudWatch dashboards, automated alerting systems, and structured application logging to ensure optimal system performance and rapid issue detection across all ECS-based workloads.
 
-Our monitoring strategy follows the **Ingeno Monitoring and Observability Framework** (documented in `ingeno-monitoring-summary.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
+Our monitoring strategy follows the **Ingeno Monitoring Guidelines** (documented in `ingeno-monitoring-guidelines.md`) which establishes standardized procedures for workload health KPIs, three-tier alerting systems, and infrastructure-as-code monitoring deployment using AWS CDK.
 
 ### Evidence
 
-**1. Standardized Workload Health KPI Framework:**
-
-*Reference: See `ingeno-monitoring-summary.md` for complete framework documentation.*
+Reference: 
+- See `ingeno-monitoring-guidelines.md` for complete framework documentation.
 
 ## OPE-002: Define a Customer Runbook/Playbook to Guide Operational Tasks
 
@@ -252,29 +253,30 @@ Manual infrastructure changes are prohibited via AWS Management Console or AWS C
 
 ## REL-002: Plan for Disaster Recovery and Recommend Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
 
-Customer did not allocate budget for fully automated disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
+Customer did not allocate budget for fully automated and fast disaster recovery mechanisms but we implement foundational resilience capabilities and provide clear recovery processes.
 
 ### Evidence
 
 **1. Workload Resilience Guidance:**
 
 **RTO & RPO Targets:**
-- **Recommended RTO:** ~8 hours for complete workload recovery in alternate region
-- **Recommended RPO:** ~15 minutes for database recovery using automated backups
-- **Customer Communication:** RTO/RPO targets discussed during architecture review sessions
+- **Production IoT Platform RTO:** 16 hours for complete workload recovery in alternate region (us-west-2)
+- **Production IoT Platform RPO:** 24 hours for database recovery using daily automated backups
 
-**Recovery Process for Core Components:**
-- **Database Recovery:** Automated RDS backups with point-in-time recovery enable restoration to any point within the backup retention period
-- **Application Recovery:** Containerized ECS services can be redeployed in any AWS region using existing CDK infrastructure definitions
-- **Data Recovery:** S3 Cross-Region Replication ensures critical application data is automatically replicated to secondary regions
-- **Infrastructure Recovery:** Complete infrastructure can be recreated in alternate regions by modifying CDK deployment parameters (region, VPC CIDR ranges)
+**Customer Requirements & Decision Rationale:**
+- **Cost-Effective IoT Architecture:** Customer chose single-AZ RDS deployment over multi-AZ to optimize industrial IoT platform costs
+- **Budget Allocation:** Customer preferred to allocate budget toward IoT device expansion and facility upgrades rather than premium disaster recovery infrastructure
+- **Industrial Risk Assessment:** Customer determined that 16-hour RTO is acceptable for manufacturing operations with planned maintenance windows
+- **Business Continuity Planning:** Customer accepted longer recovery times given their ability to operate with manual processes during outages
 
-**2. Valmetal IoT Platform Resilience Implementation:**
-
-**Automated Backup Mechanisms:**
-- **RDS Database:** Automated daily backups with 35-day retention period and continuous transaction log backups for point-in-time recovery
-- **DynamoDB Tables:** Point-in-time recovery enabled for all IoT data tables providing restore capability for the last 35 days
-- **Application Code:** Source code versioned in GitHub with automated CI/CD pipeline enabling rapid redeployment
+**Recovery Process Implementation:**
+- **Infrastructure Restoration:** Deploy complete CDK CloudFormation templates to alternate region (us-west-2) or availability zone
+- **Database Recovery:** Restore RDS from latest automated backup (24-hour retention) to new region/AZ
+- **IoT Service Recovery:** Redeploy ECS Fargate services (iot-processor, plc-logger, data-transformer) using existing CDK infrastructure definitions
+- **IoT Core Restoration:** Recreate IoT device registry and policies in new region, update device endpoints
+- **Data Pipeline Recovery:** Restore DynamoDB tables from point-in-time backups and reinitialize Timestream databases
+- **Device Reconnection:** Coordinate with facility teams to update device configurations for new IoT Core endpoints
+- **DNS Cutover:** Update Route 53 records to point to new infrastructure once IoT connectivity is validated
 
 ## COST-001: Develop Total Cost of Ownership Analysis or Cost Modeling
 
@@ -282,24 +284,4 @@ Ingeno conducts comprehensive TCO analysis using AWS Pricing Calculator and righ
 
 ### Evidence
 
-**1. Cost Analysis Methodology:**
-
-**Cost Estimation Inputs:**
-- Current resource utilization metrics (CPU, memory, storage, network)
-- Historical usage patterns and growth projections
-- Service pricing models (on-demand, reserved instances, pay-per-use)
-
-**2. Cost Model Implementation:**
-
-**Current Architecture Costs:**
-- ECS Fargate: Right-sized to minimal load (~$XX/month)
-- RDS Database: Small instance with automated backups (~$XX/month)  
-- Supporting Services: DynamoDB pay-per-request, CloudWatch, S3 (~$XX/month)
-- **Total Monthly Cost:** ~$XXX for current minimal load
-
-**Business Value Analysis:**
-- Auto-scaling ensures costs scale with actual usage (no over-provisioning)
-- Managed services eliminate server maintenance and security patching costs
-
-*Reference: AWS Pricing Calculator estimate provided as supporting documentation.*
-
+See ACI-MTL response for this topic for how cost analysis was performed. 

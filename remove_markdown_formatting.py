@@ -123,8 +123,13 @@ def convert_to_csv(content):
                 section_content = '\n'.join(current_section).strip()
                 csv_rows.append([current_heading, section_content])
             
-            # Start new section
-            current_heading = re.sub(r'^##\s+', '', line)
+            # Start new section - extract only the code portion (before the colon)
+            full_heading = re.sub(r'^##\s+', '', line)
+            # Extract only the code part (everything before the first colon)
+            if ':' in full_heading:
+                current_heading = full_heading.split(':')[0].strip()
+            else:
+                current_heading = full_heading.strip()
             current_section = []
         else:
             # Add content to current section
@@ -141,7 +146,7 @@ def convert_to_csv(content):
     writer = csv.writer(output, quoting=csv.QUOTE_ALL)
     
     # Write header
-    writer.writerow(['Heading', 'Content'])
+    writer.writerow(['Code', 'Content'])
     
     # Write each section as a row
     for heading, content in csv_rows:
